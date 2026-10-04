@@ -6,39 +6,20 @@ import java.util.List;
 /**
  * Ordem de Serviço da União Evolutions.
  *
- * É ABSTRATA (nome em itálico no Diagrama de Classes): não existe "uma Ordem
- * de Serviço" genérica no negócio da empresa - toda OS é de Módulos ou de
- * Chaves. Quem decide qual das duas é o segmento do orçamento de origem, como
- * manda o Contrato de Operação:
+ * ABSTRATA (itálico no Diagrama de Classes): toda OS é de Módulos ou de
+ * Chaves, conforme o segmento do orçamento de origem.
  *
- *   "Um objeto os de OrdemDeServico foi criado, sendo da subclasse
- *    OrdemDeServicoModulos ou OrdemDeServicoChaves conforme seg."
- *
- * Diagrama de Classes:
- *   atributos : numeroOS : String, dataAbertura : Date, statusOS : String,
- *               dataEmissaoGarantia : Date, textoExecutadoGarantia : String,
- *               dataEmissaoResponsabilidade : Date, quilometragem : int,
- *               prazoEstimado : Date, observacoes : String
- *   operações : + sinalizarAbertura() : void
- *               - setDataAbertura(data : Date) : void
- *               - setStatusOS(status : String) : void
- *               + associarOrcamento(ocr : Orcamento) : void
- *               + associarVeiculo(vei : Veiculo) : void
- *               + associarTecnico(tec : Usuario) : void
- *   associações: 1 originada de 0..1 Orcamento
- *                0..* refere-se a 1 Veiculo
- *                0..* executada por 1 Usuario
+ * Associações do Diagrama de Classes: 1 originada de 0..1 Orcamento,
+ * 0..* refere-se a 1 Veiculo, 0..* executada por 1 Usuario.
  */
 public abstract class OrdemDeServico {
 
     /**
      * Situação gravada por sinalizarAbertura().
      *
-     * DIVERGÊNCIA ENTRE ARTEFATOS: o Diagrama de Comunicação manda
-     * setStatusOs("Aberta") (mensagem 1.7.2), enquanto a POS-01 da Descrição
-     * Expandida e o mockup falam em "Em execução". Seguimos o Diagrama de
-     * Comunicação, que é o artefato de projeto que esta implementação
-     * concretiza. A divergência está registrada na DOCUMENTACAO.md.
+     * DIVERGÊNCIA: o Diagrama de Comunicação manda "Aberta" (mensagem 1.7.2),
+     * a POS-01 e o mockup falam em "Em execução". Seguimos o diagrama - ver
+     * DOCUMENTACAO.md.
      */
     public static final String STATUS_ABERTA = "Aberta";
     /** Situação do rascunho do FA-11C ("sem número definitivo"). */
@@ -73,14 +54,11 @@ public abstract class OrdemDeServico {
     // -----------------------------------------------------------------
 
     /**
-     * Mensagem 1.7 do Diagrama de Comunicação. Marca a abertura da Ordem de
-     * Serviço, executando internamente as mensagens aninhadas:
-     *   1.7.1 setDataAbertura()
-     *   1.7.2 setStatusOs("Aberta")
+     * Mensagem 1.7: marca a abertura da OS executando as mensagens aninhadas
+     * 1.7.1 setDataAbertura() e 1.7.2 setStatusOs("Aberta").
      *
-     * As duas são privadas de propósito: quem está de fora pede "sinalize a
-     * abertura" e a própria OS decide o que isso significa. Assim não há como
-     * alguém gravar uma data de abertura sem o status correspondente.
+     * As duas são privadas para que não se grave uma data de abertura sem o
+     * status correspondente.
      */
     public void sinalizarAbertura() {
         setDataAbertura(new Date());
@@ -95,17 +73,17 @@ public abstract class OrdemDeServico {
         this.statusOS = status;
     }
 
-    /** Mensagem 1.8 do Diagrama de Comunicação. Forma o vínculo com o orçamento (RN-02). */
+    /** Mensagem 1.8: vínculo com o orçamento (RN-02). */
     public void associarOrcamento(Orcamento ocr) {
         this.orcamento = ocr;
     }
 
-    /** Mensagem 1.9 do Diagrama de Comunicação. Forma o vínculo com o veículo (RN-02). */
+    /** Mensagem 1.9: vínculo com o veículo (RN-02). */
     public void associarVeiculo(Veiculo vei) {
         this.veiculo = vei;
     }
 
-    /** Mensagem 1.10 do Diagrama de Comunicação. Aloca o técnico responsável (POS-04). */
+    /** Mensagem 1.10: aloca o técnico responsável (POS-04). */
     public void associarTecnico(Usuario tec) {
         this.tecnico = tec;
     }
@@ -115,16 +93,15 @@ public abstract class OrdemDeServico {
     // -----------------------------------------------------------------
 
     /**
-     * Devolve "Módulos" ou "Chaves". É abstrato: cada subclasse sabe o seu
-     * próprio segmento. É este método que permite à camada de persistência e
-     * à tela tratarem as duas subclasses sem perguntar o tipo a cada passo.
+     * "Módulos" ou "Chaves": cada subclasse sabe o seu próprio segmento, e por
+     * isso a tela e as DAOs não precisam perguntar o tipo do objeto.
      */
     public abstract String getSegmento();
 
     /**
-     * RN-03 - campos obrigatórios. Esta parte vale para qualquer Ordem de
-     * Serviço; cada subclasse acrescenta os seus campos chamando super.validar().
-     * Lança IllegalArgumentException com a mensagem a ser exibida pelo FA-11A.
+     * RN-03: campos obrigatórios comuns a qualquer OS. Cada subclasse
+     * acrescenta os seus chamando super.validar(). A IllegalArgumentException
+     * leva a mensagem que o FA-11A exibe.
      */
     public void validar() {
         if (quilometragem <= 0) {
@@ -142,19 +119,19 @@ public abstract class OrdemDeServico {
         if (tecnico == null) {
             throw new IllegalArgumentException("Selecione o técnico responsável pela Ordem de Serviço.");
         }
-        // RN-04: o técnico tem de ser habilitado no segmento da OS.
+        // RN-04: o técnico tem de ser habilitado no segmento.
         if (!tecnico.habilitadoEm(getSegmento())) {
             throw new IllegalArgumentException(
                     "O técnico selecionado não é habilitado no segmento " + getSegmento() + ".");
         }
     }
 
-    /** POS-03: os itens são herdados do orçamento, então o total da OS é o dele. */
+    /** POS-03: os itens vêm do orçamento, então o total da OS é o dele. */
     public double getValorTotal() {
         return orcamento == null ? 0 : orcamento.getValorTotal();
     }
 
-    /** POS-03: lista de itens herdada do orçamento, exibida na tabela do mockup. */
+    /** POS-03: itens herdados do orçamento, exibidos na tabela do mockup. */
     public List<ItemOrcamento> getItens() {
         return orcamento == null ? List.of() : orcamento.getItens();
     }
@@ -188,8 +165,8 @@ public abstract class OrdemDeServico {
     }
 
     /**
-     * Usado apenas pelo FA-11C (rascunho), que grava a OS com situação
-     * "Rascunho" sem passar por sinalizarAbertura().
+     * FA-11C: grava a OS com situação "Rascunho", sem passar por
+     * sinalizarAbertura().
      */
     public void marcarComoRascunho(Date dataAbertura) {
         this.dataAbertura = dataAbertura;
@@ -197,13 +174,9 @@ public abstract class OrdemDeServico {
     }
 
     /**
-     * Repõe no objeto a data e a situação que estavam gravadas no banco.
-     *
-     * Existe por causa do encapsulamento: setDataAbertura e setStatusOS são
-     * privados (só sinalizarAbertura pode mudá-los), mas a camada de
-     * persistência precisa reconstruir um objeto já existente exatamente como
-     * ele foi gravado. Este método é o único caminho para isso, e só a DAO o
-     * usa - a tela e a controladora não têm motivo para chamá-lo.
+     * Repõe a data e a situação que estavam gravadas no banco. Como
+     * setDataAbertura e setStatusOS são privados, é o único caminho para a DAO
+     * reconstruir uma OS existente.
      */
     public void restaurarEstadoPersistido(Date dataAbertura, String statusOS) {
         this.dataAbertura = dataAbertura;

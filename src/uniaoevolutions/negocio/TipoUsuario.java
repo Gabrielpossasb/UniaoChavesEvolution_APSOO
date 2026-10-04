@@ -1,16 +1,10 @@
 package uniaoevolutions.negocio;
 
 /**
- * Tipos de usuário do sistema.
+ * Valores do atributo tipoUsuario da classe Usuario.
  *
- * Diagrama de Classes, classe Usuario:
- *     tipoUsuario : {administrador | tecnicoDeChaves | tecnicoDeModulos}
- * Mapeamento Objeto-Relacional:
- *     TB_Usuario(idUsuario<<PK>>, nome, tipoUsuario)
- *     tipoUsuario {administrador | tecnicoDeChaves | tecnicoDeModulos}
- *
- * As constantes mantêm a grafia exata dos artefatos (minúscula inicial), para
- * que o valor gravado no ENUM do MySQL seja literalmente name().
+ * A grafia é a dos artefatos (minúscula inicial), para que o valor gravado no
+ * ENUM do MySQL seja literalmente name().
  */
 public enum TipoUsuario {
 
@@ -19,10 +13,8 @@ public enum TipoUsuario {
     tecnicoDeModulos;
 
     /**
-     * RN-04 - habilitação do técnico: diz se este tipo de usuário pode ser
-     * designado como responsável por uma OS do segmento informado.
-     * O Administrador herda dos dois técnicos (ator principal da Descrição
-     * Expandida), por isso é habilitado nos dois segmentos.
+     * RN-04: diz se este tipo pode ser responsável por uma OS do segmento.
+     * O Administrador herda dos dois técnicos, logo é habilitado em ambos.
      */
     public boolean habilitadoEm(String segmento) {
         if (this == administrador) {

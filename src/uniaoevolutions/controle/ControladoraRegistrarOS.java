@@ -95,20 +95,13 @@ public class ControladoraRegistrarOS {
         return campos;
     }
 
-    /**
-     * Passo 9: "O sistema exibe a lista de técnicos habilitados no segmento da
-     * Ordem de Serviço (RN-04)."
-     *
-     * FA-09: se vier vazia, não há técnico habilitado para o segmento.
-     */
+    /** Passo 9 (RN-04): técnicos habilitados no segmento. Lista vazia = FA-09. */
     public List<Usuario> consultarTecnicosHabilitados(String segmento) throws SQLException {
         return usuarioDAO.buscarTecnicosHabilitados(segmento);
     }
 
     /**
-     * Histórico técnico do veículo, para o botão "Ver atendimentos anteriores"
-     * do mockup e para o passo 8.2 da variante V1.
-     *
+     * Passo 8.2 (V1) e botão "Ver atendimentos anteriores" do mockup.
      * ACRÉSCIMO à modelagem - ver DOCUMENTACAO.md.
      */
     public List<String> consultarHistoricoTecnico(int idVeiculo) throws SQLException {
@@ -129,12 +122,8 @@ public class ControladoraRegistrarOS {
     // =================================================================
 
     /**
-     * Operação do Contrato de Operação e mensagem 1 do Diagrama de
-     * Comunicação. É a única operação do fluxo normal que muda o estado dos
-     * objetos do domínio.
-     *
-     * O corpo do método segue, na ordem, as mensagens do Diagrama de
-     * Comunicação - os números 1.1 a 1.11 estão marcados nos comentários.
+     * Mensagem 1 do Diagrama de Comunicação e operação do Contrato de Operação.
+     * O corpo segue a ordem das mensagens 1.1 a 1.11, marcadas nos comentários.
      *
      * @return a Ordem de Serviço registrada (POS-01).
      */
@@ -153,7 +142,7 @@ public class ControladoraRegistrarOS {
         if (orc == null) {
             throw new IllegalArgumentException("Selecione o orçamento que originará a Ordem de Serviço.");
         }
-        // RN-01: origem obrigatória - orçamento aprovado e ainda não convertido.
+        // RN-01: a origem tem de estar aprovada e ainda não convertida.
         if (!orc.podeGerarOrdemDeServico()) {
             throw new IllegalArgumentException(
                     "O orçamento " + orc.getNumeroOrcamento() + " não está aprovado pelo cliente.");
@@ -180,21 +169,20 @@ public class ControladoraRegistrarOS {
         os.associarVeiculo(vei);
         os.associarTecnico(tec);
 
-        // RN-03 e RN-04 - os campos obrigatórios do segmento e a habilitação
-        // do técnico. Se algo faltar, a exceção sobe para a tela, que trata o
-        // FA-11A. O banco nem chega a ser acessado.
+        // RN-03 e RN-04, antes de qualquer acesso ao banco. A exceção sobe
+        // para a tela, que trata o FA-11A.
         os.validar();
 
         // 1.7  sinalizarAbertura() -> 1.7.1 setDataAbertura, 1.7.2 setStatusOs("Aberta")
         os.sinalizarAbertura();
 
-        // RN-07 - numeração definitiva, reservada quando o formulário abriu.
+        // RN-07: número definitivo, reservado quando o formulário abriu.
         os.setNumeroOS(numeroReservado());
 
         // 1.11  salvar(os)
         ordemServicoDAO.salvar(os);
 
-        // POS-02 - o orçamento de origem passa para "Convertido em OS".
+        // POS-02: o orçamento de origem passa para "Convertido em OS".
         orcamentoDAO.atualizarStatus(orc.getIdOrcamento(), Orcamento.STATUS_CONVERTIDO);
 
         this.osEmRegistro = os;
@@ -202,12 +190,8 @@ public class ControladoraRegistrarOS {
     }
 
     /**
-     * Mensagens 1.5 e 1.6 do Diagrama de Comunicação, com as guardas
-     * [seg = "Módulos"] e [seg = "Chaves"].
-     *
-     * Este é o ponto que o Contrato de Operação descreve como "Um objeto os de
-     * OrdemDeServico foi criado, sendo da subclasse OrdemDeServicoModulos ou
-     * OrdemDeServicoChaves conforme seg".
+     * Mensagens 1.5 e 1.6, com as guardas [seg = "Módulos"] e [seg = "Chaves"]:
+     * cria a OS na subclasse correspondente ao segmento.
      */
     private OrdemDeServico criarOrdemDeServico(String seg, int quilometragem, Date prazoEstimado,
                                                String observacoes, String relatoInicial,
@@ -233,11 +217,8 @@ public class ControladoraRegistrarOS {
     // =================================================================
 
     /**
-     * FA-11B.1 e FA-11B.2: o Administrador informa o serviço ou peça a incluir,
-     * a quantidade e o valor, e o sistema exibe a exigência de justificativa.
-     *
-     * O item fica guardado aqui, pendente, e só é efetivado em
-     * registrarOSComAlteracao(), quando a justificativa for informada (RN-05).
+     * FA-11B.1 e FA-11B.2: recebe o item a incluir e exige a justificativa.
+     * O item fica pendente até registrarOSComAlteracao() (RN-05).
      *
      * @return a mensagem a ser exibida ao Administrador.
      */
@@ -269,12 +250,10 @@ public class ControladoraRegistrarOS {
     }
 
     /**
-     * FA-11B.3 e FA-11B.4: o Administrador informa a justificativa, o sistema
-     * grava a alteração, exibe o novo valor total e avisa que a execução fica
-     * suspensa até nova aprovação do cliente.
+     * FA-11B.3 e FA-11B.4: grava a alteração e devolve o novo valor total.
      *
-     * RN-05: o orçamento volta para "Aguardando aprovação do cliente", e o
-     * caso de uso é encerrado sem registrar a Ordem de Serviço (FA-11B.5).
+     * RN-05: o orçamento volta para "Aguardando aprovação do cliente" e o caso
+     * de uso é encerrado sem registrar a Ordem de Serviço (FA-11B.5).
      *
      * @return a mensagem a ser exibida ao Administrador.
      */
@@ -289,11 +268,10 @@ public class ControladoraRegistrarOS {
 
         Orcamento orcamento = orcamentoDoItemPendente;
 
-        // Grava o item novo e o novo valor estimado do orçamento.
         orcamentoDAO.incluirItem(orcamento.getIdOrcamento(), servicoOuPeca,
                 orcamento.getSegmentoPretendido(), quantidade, valor, justificativa);
 
-        // RN-05: a execução fica suspensa até nova aprovação do cliente.
+        // RN-05: execução suspensa até nova aprovação do cliente.
         orcamentoDAO.atualizarStatus(orcamento.getIdOrcamento(), Orcamento.STATUS_AGUARDANDO);
 
         double novoTotal = orcamento.getValorTotal() + (quantidade * valor);
@@ -312,14 +290,11 @@ public class ControladoraRegistrarOS {
     // =================================================================
 
     /**
-     * FA-11C: "O Administrador informa que deseja salvar a Ordem de Serviço
-     * como rascunho" e o sistema a grava "sem número definitivo e sem
-     * alteração da situação do orçamento".
+     * FA-11C: grava a OS "sem número definitivo e sem alteração da situação do
+     * orçamento".
      *
-     * Repare que os dados técnicos do segmento NÃO são parâmetros: o rascunho
-     * existe justamente porque o registro ainda não pode ser concluído, então
-     * a RN-03 não é cobrada aqui. Só é exigido o mínimo que o banco precisa
-     * para guardar a linha.
+     * Os dados técnicos não são parâmetros: a RN-03 não é cobrada no rascunho,
+     * só o mínimo que o banco exige para guardar a linha.
      */
     public void salvarRascunhoOS(int orcamentoSelecionado, int tecnicoSelecionado, int quilometragem,
                                  Date prazoEstimado, String observacoes) throws SQLException {
@@ -345,12 +320,11 @@ public class ControladoraRegistrarOS {
         os.associarVeiculo(orc.getVeiculo());
         os.associarTecnico(tec);
 
-        // "sem número definitivo": numeroOS fica nulo e a situação é "Rascunho".
+        // "sem número definitivo": numeroOS nulo e situação "Rascunho".
         os.marcarComoRascunho(new Date());
         ordemServicoDAO.salvar(os);
 
-        // "sem alteração da situação do orçamento": nenhuma chamada a
-        // atualizarStatus aqui - é a diferença para o fluxo principal.
+        // Sem atualizarStatus: é a diferença para o fluxo principal.
         this.osEmRegistro = os;
     }
 
@@ -358,15 +332,14 @@ public class ControladoraRegistrarOS {
     // FA-00 - desistência do Administrador
     // =================================================================
 
-    /** FA-00.2: "O sistema exibe a solicitação de confirmação da desistência." */
+    /** FA-00.2: solicitação de confirmação da desistência. */
     public String solicitarConfirmacaoDesistencia() {
         return "Confirma a desistência do registro da Ordem de Serviço?";
     }
 
     /**
-     * FA-00.3 e FA-00.4: confirmada a desistência, o registro em andamento é
-     * descartado "mantendo o orçamento em sua situação original" - como nada
-     * foi gravado, basta soltar os objetos que estavam em memória.
+     * FA-00.3 e FA-00.4: descarta o registro em andamento "mantendo o orçamento
+     * em sua situação original" - nada foi gravado, basta soltar os objetos.
      */
     public void descartarRegistro() {
         this.osEmRegistro = null;
@@ -380,15 +353,11 @@ public class ControladoraRegistrarOS {
     }
 
     /**
-     * Passo 3 do fluxo principal: guarda na controladora o orçamento escolhido
-     * pelo Administrador e forma, desde já, os vínculos com ele e com o seu
-     * veículo (RN-02).
+     * Passo 3: guarda o orçamento escolhido e forma desde já os vínculos com
+     * ele e com o seu veículo (RN-02).
      *
-     * Se o segmento do orçamento escolhido não for o do rascunho atual, o
-     * rascunho é recriado na subclasse correta, preservando o número e a data
-     * reservados no passo 1. Sem isso, escolher um orçamento de Chaves depois
-     * de a tela ter aberto em Módulos deixaria em memória um objeto da
-     * subclasse errada.
+     * Se o segmento mudar, o rascunho é recriado na subclasse correta,
+     * preservando o número e a data reservados no passo 1.
      */
     public void selecionarOrcamento(Orcamento orcamento) {
         if (osEmRegistro == null || orcamento == null) {

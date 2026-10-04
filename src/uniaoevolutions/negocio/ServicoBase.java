@@ -3,15 +3,9 @@ package uniaoevolutions.negocio;
 /**
  * Serviço ou peça do catálogo da empresa.
  *
- * Esta classe NÃO está no Diagrama de Classes porque ele foi desenhado só
- * para o caso de uso Registrar Ordem de Serviço. Ela está, porém, no
- * Mapeamento Objeto-Relacional:
- *     TB_ServicoBase(idServicoBase<<PK>>, descricao, categoria,
- *                    observacoesTecnicas)
- * e TB_ItemOrcamento tem a chave estrangeira idServicoBase.
- *
- * Foi implementada porque é dela que vem a descrição exibida na coluna
- * "Serviço / Peça (herdado do orçamento)" da tabela de itens do mockup.
+ * Não está no Diagrama de Classes (desenhado só para este caso de uso), mas
+ * está no Mapeamento OR como TB_ServicoBase, referenciada por
+ * TB_ItemOrcamento. É dela que vem a descrição da coluna "Serviço / Peça".
  */
 public class ServicoBase {
 

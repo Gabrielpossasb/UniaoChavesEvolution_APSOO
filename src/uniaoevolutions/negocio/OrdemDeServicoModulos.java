@@ -3,22 +3,12 @@ package uniaoevolutions.negocio;
 import java.util.Date;
 
 /**
- * Ordem de Serviço do segmento Reparação / Programação de Módulos (ECU).
- * É a variante V1 da Descrição Expandida.
+ * OS do segmento Reparação / Programação de Módulos (ECU) - variante V1 da
+ * Descrição Expandida.
  *
- * Diagrama de Classes:
- *   atributos : relatoInicial, condicaoRecebimento, diagnosticoInicial,
- *               testesEntradaSaida, confirmacaoDefeito, causaIdentificada,
- *               reparoRealizado - todos String
- *   construtor: + <<create>> OrdemDeServicoModulos(quilometragem : int,
- *               prazoEstimado : Date, observacoes : String,
- *               relatoInicial : String, condicaoRecebimento : String,
- *               diagnosticoInicial : String)
- *
- * O construtor é a mensagem 1.5 do Diagrama de Comunicação, com a guarda
- * [seg = "Módulos"]. Os três últimos atributos (testesEntradaSaida,
- * confirmacaoDefeito, causaIdentificada, reparoRealizado) não são preenchidos
- * no registro: eles pertencem à execução do serviço, que é outro caso de uso.
+ * testesEntradaSaida, confirmacaoDefeito, causaIdentificada e reparoRealizado
+ * não são preenchidos no registro: pertencem à execução do serviço, que é
+ * outro caso de uso.
  */
 public class OrdemDeServicoModulos extends OrdemDeServico {
 
@@ -33,7 +23,7 @@ public class OrdemDeServicoModulos extends OrdemDeServico {
     public OrdemDeServicoModulos() {
     }
 
-    /** Mensagem 1.5 do Diagrama de Comunicação: <<create>> com a guarda [seg = "Módulos"]. */
+    /** Mensagem 1.5: <<create>> com a guarda [seg = "Módulos"]. */
     public OrdemDeServicoModulos(int quilometragem, Date prazoEstimado, String observacoes,
                                  String relatoInicial, String condicaoRecebimento,
                                  String diagnosticoInicial) {
@@ -48,11 +38,7 @@ public class OrdemDeServicoModulos extends OrdemDeServico {
         return Segmento.MODULOS;
     }
 
-    /**
-     * RN-03 no segmento Módulos. Primeiro valida o que é comum a qualquer OS
-     * (super.validar()) e depois os campos próprios da variante V1, exigidos
-     * também pelas pré-condições do Contrato de Operação.
-     */
+    /** RN-03 no segmento Módulos: o comum a qualquer OS mais os campos da V1. */
     @Override
     public void validar() {
         super.validar();

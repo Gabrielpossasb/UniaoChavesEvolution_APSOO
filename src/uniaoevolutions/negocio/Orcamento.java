@@ -6,27 +6,20 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * Orçamento solicitado pelo cliente. É a origem obrigatória de toda Ordem de
+ * Orçamento solicitado pelo cliente: origem obrigatória de toda Ordem de
  * Serviço (RN-01).
  *
- * Diagrama de Classes:
- *   atributos : dataSolicitacao : Date, origemAtendimento : String,
- *               segmentoPretendido : String, valorEstimado : double,
- *               status : String
- *   operações : + getVeiculo() : Veiculo
- *               + getSegmentoPretendido() : String
- *   associações: 1 compoe 1..* ItemOrcamento (composição)
- *                0..1 solicita 1 Cliente
- *                0..* refere-se a 1 Veiculo
- *                0..1 originada de 1 OrdemDeServico
+ * Associações do Diagrama de Classes: 1 compoe 1..* ItemOrcamento
+ * (composição), 0..1 solicita 1 Cliente, 0..* refere-se a 1 Veiculo,
+ * 0..1 originada de 1 OrdemDeServico.
  */
 public class Orcamento {
 
-    /** Situação exigida pela RN-01 / PRE-02 para o orçamento poder gerar uma OS. */
+    /** Situação exigida pela RN-01 / PRE-02 para o orçamento gerar uma OS. */
     public static final String STATUS_APROVADO = "Aprovado pelo cliente";
-    /** Situação que o orçamento assume depois da conversão (POS-02). */
+    /** Situação após a conversão (POS-02). */
     public static final String STATUS_CONVERTIDO = "Convertido em OS";
-    /** Situação para a qual a RN-05 devolve o orçamento quando há alteração de item. */
+    /** Situação de volta pela RN-05, quando há alteração de item. */
     public static final String STATUS_AGUARDANDO = "Aguardando aprovação do cliente";
 
     private int idOrcamento;
@@ -43,26 +36,22 @@ public class Orcamento {
     public Orcamento() {
     }
 
-    /** Operação do Diagrama de Classes: devolve o veículo do orçamento. */
+    /** Operação do Diagrama de Classes (mensagem 1.2). */
     public Veiculo getVeiculo() {
         return veiculo;
     }
 
-    /** Operação do Diagrama de Classes: devolve o segmento pretendido. */
+    /** Operação do Diagrama de Classes (mensagem 1.4). */
     public String getSegmentoPretendido() {
         return segmentoPretendido;
     }
 
-    /** RN-01: só um orçamento aprovado e ainda não convertido pode gerar OS. */
+    /** RN-01: só orçamento aprovado e ainda não convertido pode gerar OS. */
     public boolean podeGerarOrdemDeServico() {
         return STATUS_APROVADO.equals(status);
     }
 
-    /**
-     * Soma dos subtotais dos itens - é o "Valor total da OS" do mockup.
-     * POS-03: os itens do orçamento são herdados pela Ordem de Serviço, então
-     * o total da OS é o total do orçamento.
-     */
+    /** Soma dos subtotais dos itens: o "Valor total da OS" do mockup (POS-03). */
     public double getValorTotal() {
         double total = 0;
         for (ItemOrcamento item : itens) {
@@ -72,9 +61,8 @@ public class Orcamento {
     }
 
     /**
-     * Número de exibição do orçamento, no formato ORC-AAAA-NNNN do mockup.
-     * É DERIVADO do id e do ano da solicitação: o Mapeamento OR não tem coluna
-     * para esse número, então ele é calculado e não armazenado.
+     * Número ORC-AAAA-NNNN do mockup. Derivado do id e do ano: o Mapeamento OR
+     * não tem coluna para ele.
      */
     public String getNumeroOrcamento() {
         String ano = dataSolicitacao == null

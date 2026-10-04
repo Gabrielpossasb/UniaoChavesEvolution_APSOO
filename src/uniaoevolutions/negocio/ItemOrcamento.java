@@ -3,16 +3,12 @@ package uniaoevolutions.negocio;
 /**
  * Item de um orçamento: um serviço ou peça com o valor proposto ao cliente.
  *
- * Diagrama de Classes: ItemOrcamento { valorProposto : double }, ligado a
- * Orcamento por uma COMPOSIÇÃO (losango cheio, papel "compoe", multiplicidade
- * 1 para 1..*). Composição quer dizer que o item não existe sozinho: ele
- * nasce e morre com o seu orçamento. No banco isso virou a chave primária
- * composta (idItemOrcamento, idOrcamento) de TB_ItemOrcamento.
+ * Ligado a Orcamento por COMPOSIÇÃO ("compoe", 1 para 1..*): nasce e morre com
+ * o seu orçamento, o que no banco virou a PK composta
+ * (idItemOrcamento, idOrcamento) de TB_ItemOrcamento.
  *
- * O atributo quantidade é um ACRÉSCIMO à modelagem (ver DOCUMENTACAO.md,
- * seção de divergências): ele é exigido pela coluna "Qtd." do mockup e pela
- * operação incluirItemOrdemServico(servicoOuPeca, quantidade, valor) da
- * ControladoraRegistrarOS, mas não consta nem da classe nem do Mapeamento OR.
+ * ACRÉSCIMO à modelagem: o atributo quantidade, exigido pela coluna "Qtd." do
+ * mockup e por incluirItemOrdemServico(). Ver DOCUMENTACAO.md.
  */
 public class ItemOrcamento {
 
@@ -32,12 +28,12 @@ public class ItemOrcamento {
         this.servicoBase = servicoBase;
     }
 
-    /** Subtotal do item: quantidade x valor unitário (coluna "Subtotal" do mockup). */
+    /** Coluna "Subtotal" do mockup: quantidade x valor unitário. */
     public double getSubtotal() {
         return quantidade * valorProposto;
     }
 
-    /** Descrição exibida na coluna "Serviço / Peça" - vem do ServicoBase. */
+    /** Coluna "Serviço / Peça" do mockup: vem do ServicoBase. */
     public String getDescricao() {
         return servicoBase == null ? "" : servicoBase.getDescricao();
     }

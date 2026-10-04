@@ -1,20 +1,13 @@
 package uniaoevolutions.negocio;
 
 /**
- * Usuário do sistema. É quem executa a Ordem de Serviço (associação
- * "executada por" do Diagrama de Classes, com multiplicidade 1 do lado do
- * Usuario e 0..* do lado da OrdemDeServico).
+ * Usuário do sistema: quem executa a Ordem de Serviço (associação "executada
+ * por", 0..* OS para 1 Usuario).
  *
- * Diagrama de Classes: Usuario { idUsuario : int, nome : String,
- *                                tipoUsuario : {administrador |
- *                                tecnicoDeChaves | tecnicoDeModulos} }
- *
- * Observação de rastreabilidade: a versão anterior do Diagrama de Classes
- * tinha as classes Tecnico, TecnicoDeChaves, TecnicoDeModulos e Administrador
- * em hierarquia. A versão corrigida (01/10/2026), que é a implementada aqui,
- * trocou essa hierarquia por uma única classe Usuario com o atributo
- * enumerado tipoUsuario - e o Mapeamento OR corrigido acompanhou, deixando
- * apenas TB_Usuario.
+ * RASTREABILIDADE: a versão anterior do Diagrama de Classes tinha a hierarquia
+ * Tecnico / TecnicoDeChaves / TecnicoDeModulos / Administrador. A versão
+ * corrigida (01/10/2026), implementada aqui, usa uma única classe com o
+ * atributo enumerado tipoUsuario, e o Mapeamento OR ficou só com TB_Usuario.
  */
 public class Usuario {
 
@@ -32,9 +25,8 @@ public class Usuario {
     }
 
     /**
-     * RN-04: somente técnicos habilitados no segmento da Ordem de Serviço
-     * podem ser designados como responsáveis. A regra é do negócio, por isso
-     * mora aqui e não na tela nem na DAO.
+     * RN-04: só técnicos habilitados no segmento podem ser responsáveis. É
+     * regra de negócio, por isso mora aqui e não na tela nem na DAO.
      */
     public boolean habilitadoEm(String segmento) {
         return tipoUsuario != null && tipoUsuario.habilitadoEm(segmento);
@@ -64,7 +56,7 @@ public class Usuario {
         this.tipoUsuario = tipoUsuario;
     }
 
-    /** Rótulo da combo "Técnico responsável" do mockup: "Nome - Tipo". */
+    /** Rótulo "Nome - Tipo" da combo "Técnico responsável" do mockup. */
     @Override
     public String toString() {
         if (tipoUsuario == TipoUsuario.tecnicoDeModulos) {

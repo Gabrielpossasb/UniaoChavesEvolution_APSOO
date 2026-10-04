@@ -3,10 +3,8 @@ package uniaoevolutions.negocio;
 /**
  * Cliente da União Evolutions.
  *
- * Diagrama de Classes: Cliente { nome : String, telefone : String }.
- * O atributo idCliente não aparece na classe, mas é a chave primária de
- * TB_Cliente no Mapeamento Objeto-Relacional: ele é o identificador do objeto
- * no banco e por isso faz parte da classe na camada de negócio.
+ * idCliente não consta do Diagrama de Classes, mas é a PK de TB_Cliente no
+ * Mapeamento OR - é o identificador do objeto no banco.
  */
 public class Cliente {
 

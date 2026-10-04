@@ -1,15 +1,11 @@
 package uniaoevolutions.negocio;
 
 /**
- * Veículo atendido pela União Evolutions.
+ * Veículo atendido pela União Evolutions. Os 13 atributos são os do Diagrama
+ * de Classes, na mesma ordem; idVeiculo é a PK de TB_Veiculo.
  *
- * Diagrama de Classes: os 13 atributos abaixo, na mesma ordem e com a mesma
- * grafia. Os quatro últimos blocos (tipoModulo, modeloECU, identificacaoModulo,
- * codigoMecanico, senhaImobilizador, senhaAlarme, senhaRadio) são os dados
- * técnicos que a tela exibe nos blocos "Dados Técnicos" do mockup: eles
- * pertencem ao veículo, não à Ordem de Serviço.
- *
- * idVeiculo vem de TB_Veiculo(idVeiculo<<PK>>) no Mapeamento Objeto-Relacional.
+ * De tipoModulo a senhaRadio estão os dados que a tela exibe nos blocos "Dados
+ * Técnicos" do mockup: eles pertencem ao veículo, não à Ordem de Serviço.
  */
 public class Veiculo {
 
@@ -143,7 +139,7 @@ public class Veiculo {
         this.senhaRadio = senhaRadio;
     }
 
-    /** Texto "Marca Modelo Motorizacao", como o campo "Marca / Modelo" do mockup. */
+    /** Campo "Marca / Modelo" do mockup: "Marca Modelo Motorizacao". */
     public String getMarcaModelo() {
         return marca + " " + modelo + (motorizacao == null ? "" : " " + motorizacao);
     }

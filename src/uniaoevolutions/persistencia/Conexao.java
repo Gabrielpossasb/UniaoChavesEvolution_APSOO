@@ -5,13 +5,11 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 /**
- * Abre e fecha a conexão com o banco MySQL do sistema (API JDBC).
+ * Abre e fecha a conexão JDBC com o MySQL. É a única classe que sabe onde o
+ * banco está.
  *
- * É a única classe que conhece onde o banco está. As DAOs pedem a conexão a
- * ela e devolvem no fim; nenhuma outra camada sabe que existe um MySQL.
- *
- * RNF-4 (o sistema opera na rede local, sem nuvem): em produção, "localhost"
- * vira o IP do servidor da oficina.
+ * RNF-4 (rede local, sem nuvem): em produção, "localhost" vira o IP do
+ * servidor da oficina.
  */
 public class Conexao {
 
@@ -19,12 +17,11 @@ public class Conexao {
     private static final String USUARIO = "root";
     private static final String SENHA = "";
 
-    /** Abre uma conexão com o banco. */
     public static Connection conectar() throws SQLException {
         return DriverManager.getConnection(URL, USUARIO, SENHA);
     }
 
-    /** Fecha a conexão recebida, se ela existir. */
+    /** Fecha a conexão recebida, se existir. */
     public static void desconectar(Connection conexao) throws SQLException {
         if (conexao != null) {
             conexao.close();

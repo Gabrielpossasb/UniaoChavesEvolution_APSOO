@@ -44,19 +44,12 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * CAMADA DE INTERFACE COM O USUÁRIO.
+ * Classe <<boundary>> do Diagrama de Classes e objeto ":Interface" do Diagrama
+ * de Comunicação. O layout segue as seções do
+ * MOCKUP-registrar-ordem-de-servico.pdf.
  *
- * É a classe <<boundary>> TelaRegistrarOrdemServico do Diagrama de Classes e o
- * objeto ":Interface" do Diagrama de Comunicação. O layout segue o
- * MOCKUP-registrar-ordem-de-servico.pdf, seção por seção:
- *
- *   Identificação da OS | Cliente e Veículo | Segmento do Serviço |
- *   Dados Técnicos | Execução | botões
- *
- * Esta classe NÃO tem nenhuma linha de SQL, não abre conexão e não conhece as
- * DAOs. Ela fala com UMA única classe: a ControladoraRegistrarOS. Tudo o que
- * ela faz é ler o que o usuário digitou, pedir à controladora e exibir o
- * resultado ou a mensagem de erro.
+ * Sem SQL e sem conhecer as DAOs: lê o que o usuário digitou, pede à
+ * ControladoraRegistrarOS e exibe o resultado ou o erro.
  */
 public class TelaRegistrarOrdemServico extends JFrame {
 
@@ -72,7 +65,7 @@ public class TelaRegistrarOrdemServico extends JFrame {
     private static final SimpleDateFormat DATA = new SimpleDateFormat("dd/MM/yyyy");
     private static final DecimalFormat MOEDA = criarFormatoMoeda();
 
-    /** A tela conversa apenas com a camada controladora. */
+    /** Única classe com que a tela conversa. */
     private final ControladoraRegistrarOS controladora = new ControladoraRegistrarOS();
 
     // --- Identificação da OS -----------------------------------------
@@ -120,7 +113,7 @@ public class TelaRegistrarOrdemServico extends JFrame {
             new String[]{"Serviço / Peça (herdado do orçamento)", "Qtd.", "Valor unit.", "Subtotal"}, 0) {
         @Override
         public boolean isCellEditable(int linha, int coluna) {
-            return false;   // POS-03: os itens são herdados do orçamento, não digitados.
+            return false;   // POS-03: itens herdados do orçamento, não digitados.
         }
     };
     private final JTable tabelaItens = new JTable(modeloItens);
@@ -133,7 +126,7 @@ public class TelaRegistrarOrdemServico extends JFrame {
     private final JButton botaoImprimir = new JButton("Imprimir OS");
     private final JButton botaoSalvar = new JButton("Salvar Ordem de Serviço");
 
-    /** Evita que o preenchimento automático dispare os eventos de troca. */
+    /** Impede que o preenchimento automático dispare os eventos de troca. */
     private boolean carregando;
 
     public TelaRegistrarOrdemServico() {
@@ -143,9 +136,8 @@ public class TelaRegistrarOrdemServico extends JFrame {
         setLocationRelativeTo(null);
         montarTela();
         ligarEventos();
-        // O passo 1 acessa o banco e pode exibir mensagem. Ele é agendado para
-        // depois da janela aparecer, para que um eventual erro (FA-12) seja
-        // mostrado sobre a tela já montada, e não antes dela existir.
+        // O passo 1 acessa o banco: é agendado para depois de a janela
+        // aparecer, para que um erro (FA-12) saia sobre a tela já montada.
         SwingUtilities.invokeLater(this::iniciarRegistro);
     }
 
@@ -292,8 +284,8 @@ public class TelaRegistrarOrdemServico extends JFrame {
     }
 
     /**
-     * Bloco "DADOS TÉCNICOS" do mockup. Os dois blocos (V1 e V2) ficam num
-     * CardLayout: só um deles aparece de cada vez, conforme o segmento.
+     * Bloco "DADOS TÉCNICOS" do mockup. V1 e V2 ficam num CardLayout: só um
+     * aparece de cada vez, conforme o segmento.
      */
     private JPanel criarSecaoDadosTecnicos() {
         painelDadosTecnicos.setOpaque(false);
@@ -312,7 +304,7 @@ public class TelaRegistrarOrdemServico extends JFrame {
         return secao;
     }
 
-    /** Variante V1 - os campos de identificação do módulo vêm do Veiculo. */
+    /** Variante V1: a identificação do módulo vem do Veiculo. */
     private JPanel criarBlocoModulos() {
         JPanel bloco = new JPanel();
         bloco.setLayout(new BoxLayout(bloco, BoxLayout.Y_AXIS));
@@ -335,7 +327,7 @@ public class TelaRegistrarOrdemServico extends JFrame {
         return bloco;
     }
 
-    /** Variante V2 - os dados do imobilizador vêm do Veiculo. */
+    /** Variante V2: os dados do imobilizador vêm do Veiculo. */
     private JPanel criarBlocoChaves() {
         JPanel bloco = new JPanel();
         bloco.setLayout(new BoxLayout(bloco, BoxLayout.Y_AXIS));
@@ -360,7 +352,7 @@ public class TelaRegistrarOrdemServico extends JFrame {
 
         tabelaItens.setRowHeight(22);
         tabelaItens.getTableHeader().setReorderingAllowed(false);
-        // A descrição do serviço é longa; as três colunas de número são curtas.
+        // A descrição é longa; as colunas de número são curtas.
         tabelaItens.getColumnModel().getColumn(0).setPreferredWidth(520);
         tabelaItens.getColumnModel().getColumn(1).setPreferredWidth(50);
         tabelaItens.getColumnModel().getColumn(2).setPreferredWidth(110);
@@ -389,7 +381,7 @@ public class TelaRegistrarOrdemServico extends JFrame {
         return secao;
     }
 
-    /** Botões do rodapé do mockup, mais os dois exigidos pelo FA-11B e FA-11C. */
+    /** Botões do rodapé do mockup, mais os do FA-11B e FA-11C. */
     private JPanel criarBarraDeBotoes() {
         JPanel barra = new JPanel(new GridBagLayout());
         barra.setBackground(CINZA_FUNDO);
@@ -435,8 +427,8 @@ public class TelaRegistrarOrdemServico extends JFrame {
     // =================================================================
 
     /**
-     * Passos 1 e 2 do fluxo principal: abre o formulário com o número e a data
-     * de abertura e carrega a lista de orçamentos aprovados.
+     * Passos 1 e 2: abre o formulário com o número e a data de abertura e
+     * carrega a lista de orçamentos aprovados.
      */
     private void iniciarRegistro() {
         try {
@@ -454,8 +446,7 @@ public class TelaRegistrarOrdemServico extends JFrame {
     private void carregarOrcamentosAprovados() throws SQLException {
         List<Orcamento> aprovados = controladora.consultarOrcamentosAprovados();
 
-        // carregando = true enquanto a combo é remontada: assim o
-        // ActionListener não dispara uma consulta a cada item adicionado.
+        // Evita que o ActionListener consulte o banco a cada item adicionado.
         carregando = true;
         comboOrcamento.removeAllItems();
         for (Orcamento orcamento : aprovados) {
@@ -478,14 +469,11 @@ public class TelaRegistrarOrdemServico extends JFrame {
         }
         botaoSalvar.setEnabled(true);
         botaoRascunho.setEnabled(true);
-        // Passos 3 e 4 para o primeiro orçamento da lista, já selecionado acima.
+        // Passos 3 e 4 para o primeiro orçamento, selecionado acima.
         aoSelecionarOrcamento();
     }
 
-    /**
-     * Passos 3 e 4: escolhido o orçamento, o sistema exibe os dados do cliente,
-     * do veículo, do segmento e dos itens herdados.
-     */
+    /** Passos 3 e 4: exibe cliente, veículo, segmento e itens herdados. */
     private void aoSelecionarOrcamento() {
         if (carregando) {
             return;
@@ -496,14 +484,14 @@ public class TelaRegistrarOrdemServico extends JFrame {
             return;
         }
         try {
-            // Relê do banco para trazer o orçamento completo (cliente, veículo, itens).
+            // Relê do banco para trazer cliente, veículo e itens.
             Orcamento completo = controladora.consultarOrcamento(orcamento.getIdOrcamento());
             controladora.selecionarOrcamento(completo);
             preencherClienteVeiculo(completo);
             preencherItens(completo);
 
             // Passo 5: o segmento vem pré-selecionado com o segmentoPretendido
-            // do orçamento, que é o que o Contrato de Operação usa na gravação.
+            // do orçamento, que é o usado na gravação.
             carregando = true;
             if (Segmento.CHAVES.equals(completo.getSegmentoPretendido())) {
                 radioChaves.setSelected(true);
@@ -520,7 +508,7 @@ public class TelaRegistrarOrdemServico extends JFrame {
         }
     }
 
-    /** Passo 4: dados do cliente e do veículo herdados do orçamento. */
+    /** Passo 4: cliente e veículo herdados do orçamento. */
     private void preencherClienteVeiculo(Orcamento orcamento) {
         campoCliente.setText(orcamento.getCliente().getNome());
         campoTelefone.setText(orcamento.getCliente().getTelefone());
@@ -530,7 +518,7 @@ public class TelaRegistrarOrdemServico extends JFrame {
         campoMarcaModelo.setText(veiculo.getMarcaModelo());
         campoAno.setText(String.valueOf(veiculo.getAnoModelo()));
 
-        // Dados técnicos que pertencem ao veículo (ver Diagrama de Classes).
+        // Dados técnicos que pertencem ao veículo.
         campoTipoModulo.setText(veiculo.getTipoModulo());
         campoModeloECU.setText(veiculo.getModeloECU());
         campoIdentificacaoModulo.setText(veiculo.getIdentificacaoModulo());
@@ -538,7 +526,7 @@ public class TelaRegistrarOrdemServico extends JFrame {
         campoSenhaImobilizador.setText(veiculo.getSenhaImobilizador());
     }
 
-    /** Passo 4 / POS-03: itens de serviço e peça herdados do orçamento. */
+    /** Passo 4 / POS-03: itens herdados do orçamento. */
     private void preencherItens(Orcamento orcamento) {
         modeloItens.setRowCount(0);
         for (ItemOrcamento item : orcamento.getItens()) {
@@ -552,8 +540,8 @@ public class TelaRegistrarOrdemServico extends JFrame {
     }
 
     /**
-     * Passos 6 e 9: o segmento define o bloco de dados técnicos exibido e a
-     * lista de técnicos habilitados (RN-04).
+     * Passos 6 e 9: o segmento define o bloco técnico exibido e a lista de
+     * técnicos habilitados (RN-04).
      */
     private void aoTrocarSegmento() {
         if (carregando) {
@@ -561,7 +549,7 @@ public class TelaRegistrarOrdemServico extends JFrame {
         }
         String segmento = segmentoSelecionado();
 
-        // Passo 6: campos exigidos pela RN-03 neste segmento.
+        // Passo 6: campos exigidos pela RN-03.
         List<String> campos = controladora.consultarBlocosDadosTecnicos(segmento);
         rotuloCamposExigidos.setText("Campos exigidos no segmento " + segmento + ": "
                 + String.join(" | ", campos));
@@ -600,7 +588,7 @@ public class TelaRegistrarOrdemServico extends JFrame {
                     campoDiagnosticoInicial.getText().trim(),
                     campoServicoExecutado.getText().trim());
 
-            // Passo 12 do fluxo principal, com a mensagem da Descrição Expandida.
+            // Passo 12: mensagem de sucesso da Descrição Expandida.
             rotuloSituacao.setText(os.getStatusOS().toUpperCase());
             campoNumeroOS.setText(os.getNumeroOS());
             JOptionPane.showMessageDialog(this,
@@ -620,7 +608,7 @@ public class TelaRegistrarOrdemServico extends JFrame {
     // Fluxos alternativos
     // =================================================================
 
-    /** FA-11C: salvar a Ordem de Serviço como rascunho. */
+    /** FA-11C: salva a Ordem de Serviço como rascunho. */
     private void salvarRascunho() {
         try {
             Orcamento orcamento = orcamentoSelecionado();
@@ -666,7 +654,7 @@ public class TelaRegistrarOrdemServico extends JFrame {
             int quantidade = lerInteiro(quantidadeTexto, "Informe uma quantidade numérica válida.");
             double valor = lerDecimal(valorTexto, "Informe um valor numérico válido.");
 
-            // FA-11B.2: o sistema exibe a exigência de justificativa.
+            // FA-11B.2: exibe a exigência de justificativa.
             String exigencia = controladora.incluirItemOrdemServico(servico.trim(), quantidade, valor);
             String justificativa = JOptionPane.showInputDialog(this, exigencia,
                     "Justificativa da alteração (RN-05)", JOptionPane.WARNING_MESSAGE);
@@ -680,7 +668,7 @@ public class TelaRegistrarOrdemServico extends JFrame {
             JOptionPane.showMessageDialog(this, resultado, "Alteração registrada",
                     JOptionPane.INFORMATION_MESSAGE);
 
-            // FA-11B.5: encerra o caso de uso sem registrar a Ordem de Serviço.
+            // FA-11B.5: encerra sem registrar a Ordem de Serviço.
             reiniciarFormulario();
         } catch (IllegalArgumentException erro) {
             mostrarAviso(erro.getMessage());
@@ -689,7 +677,7 @@ public class TelaRegistrarOrdemServico extends JFrame {
         }
     }
 
-    /** FA-00: desistência do Administrador quanto ao registro. */
+    /** FA-00: desistência do Administrador. */
     private void cancelar() {
         int resposta = JOptionPane.showConfirmDialog(this,
                 controladora.solicitarConfirmacaoDesistencia(),
@@ -701,7 +689,7 @@ public class TelaRegistrarOrdemServico extends JFrame {
         dispose();
     }
 
-    /** Passo 8.2 da variante V1 / botão "Ver atendimentos anteriores" do mockup. */
+    /** Passo 8.2 da V1 / botão "Ver atendimentos anteriores" do mockup. */
     private void verHistoricoTecnico() {
         try {
             Orcamento orcamento = orcamentoSelecionado();
@@ -723,9 +711,8 @@ public class TelaRegistrarOrdemServico extends JFrame {
     }
 
     /**
-     * Botão "Imprimir OS" do mockup: exibe em formato de texto a Ordem de
-     * Serviço como ela está no momento. Pode ser usada antes da gravação, por
-     * isso os campos ainda não informados saem como "-".
+     * Botão "Imprimir OS" do mockup: exibe a OS como ela está. Pode ser usado
+     * antes da gravação, então os campos em branco saem como "-".
      */
     private void imprimir() {
         OrdemDeServico os = controladora.getOsEmRegistro();
@@ -733,16 +720,16 @@ public class TelaRegistrarOrdemServico extends JFrame {
             mostrarAviso("Selecione o orçamento antes de imprimir a Ordem de Serviço.");
             return;
         }
-        // Copia para a OS em registro o que já foi digitado na tela.
+        // Copia para a OS o que já foi digitado na tela.
         try {
             os.setQuilometragem(lerQuilometragem());
         } catch (IllegalArgumentException naoInformada) {
-            // quilometragem ainda em branco - sai como "-" na impressão
+            // em branco: sai como "-"
         }
         try {
             os.setPrazoEstimado(lerPrazoEstimado());
         } catch (IllegalArgumentException naoInformado) {
-            // prazo ainda em branco - sai como "-" na impressão
+            // em branco: sai como "-"
         }
         os.setObservacoes(campoObservacoes.getText().trim());
         Usuario tecnico = (Usuario) comboTecnico.getSelectedItem();
@@ -814,7 +801,7 @@ public class TelaRegistrarOrdemServico extends JFrame {
     // Apoio
     // =================================================================
 
-    /** Limpa a tela e volta ao passo 1, para o próximo registro. */
+    /** Limpa a tela e volta ao passo 1. */
     private void reiniciarFormulario() {
         campoQuilometragem.setText("");
         campoPrazoEstimado.setText("");
@@ -888,7 +875,7 @@ public class TelaRegistrarOrdemServico extends JFrame {
         return rolagem;
     }
 
-    /** FA-11A e demais pendências do usuário: aviso, não erro de sistema. */
+    /** FA-11A e demais pendências: aviso, não erro de sistema. */
     private void mostrarAviso(String mensagem) {
         JOptionPane.showMessageDialog(this, mensagem, "Atenção", JOptionPane.WARNING_MESSAGE);
     }
@@ -905,7 +892,7 @@ public class TelaRegistrarOrdemServico extends JFrame {
     // Construção dos componentes visuais
     // =================================================================
 
-    /** Um cartão branco com título, como as seções do mockup. */
+    /** Cartão branco com título, como as seções do mockup. */
     private JPanel criarSecao(String titulo) {
         JPanel painel = new JPanel();
         painel.setLayout(new BoxLayout(painel, BoxLayout.Y_AXIS));
@@ -925,7 +912,7 @@ public class TelaRegistrarOrdemServico extends JFrame {
         return painel;
     }
 
-    /** Um campo do formulário: rótulo pequeno em cima, componente embaixo. */
+    /** Campo do formulário: rótulo em cima, componente embaixo. */
     private JPanel criarCampo(String rotulo, JComponent componente) {
         JPanel painel = new JPanel(new BorderLayout(0, 3));
         painel.setOpaque(false);
@@ -940,7 +927,7 @@ public class TelaRegistrarOrdemServico extends JFrame {
         return painel;
     }
 
-    /** Uma linha de campos, dividindo a largura conforme os pesos informados. */
+    /** Linha de campos, dividindo a largura conforme os pesos. */
     private JPanel criarLinha(JComponent[] campos, double[] pesos) {
         JPanel painel = new JPanel(new GridBagLayout());
         painel.setOpaque(false);
@@ -958,7 +945,7 @@ public class TelaRegistrarOrdemServico extends JFrame {
         return painel;
     }
 
-    /** Campo que o usuário não digita: seu conteúdo vem do orçamento ou do sistema. */
+    /** Campo não digitável: o conteúdo vem do orçamento ou do sistema. */
     private static JTextField criarCampoSomenteLeitura() {
         JTextField campo = new JTextField();
         campo.setEditable(false);
