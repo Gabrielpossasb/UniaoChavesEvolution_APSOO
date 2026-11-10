@@ -74,8 +74,8 @@ public abstract class OrdemDeServico {
     }
 
     /** Mensagem 1.8: vínculo com o orçamento (RN-02). */
-    public void associarOrcamento(Orcamento ocr) {
-        this.orcamento = ocr;
+    public void associarOrcamento(Orcamento orc) {
+        this.orcamento = orc;
     }
 
     /** Mensagem 1.9: vínculo com o veículo (RN-02). */

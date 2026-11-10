@@ -100,30 +100,18 @@ public class ControladoraRegistrarOS {
         return usuarioDAO.buscarTecnicosHabilitados(segmento);
     }
 
-    /**
-     * Passo 8.2 (V1) e botão "Ver atendimentos anteriores" do mockup.
-     * ACRÉSCIMO à modelagem - ver DOCUMENTACAO.md.
-     */
-    public List<String> consultarHistoricoTecnico(int idVeiculo) throws SQLException {
-        SimpleDateFormat formato = new SimpleDateFormat("dd/MM/yyyy");
-        List<String> linhas = new ArrayList<>();
-        for (OrdemDeServico os : ordemServicoDAO.buscarHistoricoTecnico(idVeiculo)) {
-            String data = os.getDataAbertura() == null ? "-" : formato.format(os.getDataAbertura());
-            linhas.add(os.getNumeroOS() + "  -  " + data
-                     + "  -  " + os.getSegmento()
-                     + "  -  " + os.getQuilometragem() + " km"
-                     + "  -  " + os.getStatusOS());
-        }
-        return linhas;
-    }
-
     // =================================================================
     // Operação principal - passo 12 do fluxo principal
     // =================================================================
 
     /**
      * Mensagem 1 do Diagrama de Comunicação e operação do Contrato de Operação.
-     * O corpo segue a ordem das mensagens 1.1 a 1.11, marcadas nos comentários.
+     * O corpo segue a ordem das mensagens 1.1 a 1.11 do diagrama corrigido
+     * (Design/Diagrama de Comunicação.corrigido.docx), marcadas nos comentários.
+     * Os nomes seguem o Diagrama de Classes corrigido, que é posterior: por
+     * isso 1.2 é orc.getVeiculo() (não há VeiculoDAO), 1.3 é
+     * usuarioDAO.buscarUsuario() (não há TecnicoDAO) e 1.8-1.10 são os
+     * associar*() da OrdemDeServico (não há associaOS).
      *
      * @return a Ordem de Serviço registrada (POS-01).
      */
@@ -148,10 +136,10 @@ public class ControladoraRegistrarOS {
                     "O orçamento " + orc.getNumeroOrcamento() + " não está aprovado pelo cliente.");
         }
 
-        // 1.2  vei = getVeiculo() : Veiculo
+        // 1.2  vei = buscarVeiculo(orc) : Veiculo  -> Orcamento.getVeiculo() do Diagrama de Classes
         Veiculo vei = orc.getVeiculo();
 
-        // 1.3  tec = buscarTecnico(tecnicoSelecionado) : Tecnico
+        // 1.3  tec = buscarTecnico(tecnicoSelecionado) : Tecnico  -> UsuarioDAO.buscarUsuario
         Usuario tec = usuarioDAO.buscarUsuario(tecnicoSelecionado);
         if (tec == null) {
             throw new IllegalArgumentException("Selecione o técnico responsável pela Ordem de Serviço.");
@@ -160,21 +148,27 @@ public class ControladoraRegistrarOS {
         // 1.4  seg = getSegmentoPretendido() : String
         String seg = orc.getSegmentoPretendido();
 
-        // 1.5 / 1.6  <<create>> da subclasse correspondente ao segmento
+        // 1.5  [seg = "Modulos"] <<create>> OrdemDeServicoModulos(...)
+        // 1.6  [seg = "Chaves"]  <<create>> OrdemDeServicoChaves(...)
         OrdemDeServico os = criarOrdemDeServico(seg, quilometragem, prazoEstimado, observacoes,
                 relatoInicial, condicaoRecebimento, diagnosticoInicial, servicoExecutado);
 
-        // 1.8 / 1.9 / 1.10  formação dos vínculos (RN-02 e POS-04)
-        os.associarOrcamento(orc);
-        os.associarVeiculo(vei);
-        os.associarTecnico(tec);
-
-        // RN-03 e RN-04, antes de qualquer acesso ao banco. A exceção sobe
-        // para a tela, que trata o FA-11A.
-        os.validar();
-
         // 1.7  sinalizarAbertura() -> 1.7.1 setDataAbertura, 1.7.2 setStatusOs("Aberta")
         os.sinalizarAbertura();
+
+        // 1.8  associaOS(os) -> orc   (Diagrama de Classes: associarOrcamento)
+        os.associarOrcamento(orc);
+
+        // 1.9  associaOS(os) -> vei   (Diagrama de Classes: associarVeiculo)
+        os.associarVeiculo(vei);
+
+        // 1.10 associaOS(os) -> tec   (Diagrama de Classes: associarTecnico)
+        os.associarTecnico(tec);
+
+        // RN-03 e RN-04, antes de qualquer acesso ao banco (não é mensagem do
+        // diagrama). Se falhar, a exceção sobe para a tela (FA-11A) e nada é
+        // gravado: a OS marcada em 1.7 só existia em memória.
+        os.validar();
 
         // RN-07: número definitivo, reservado quando o formulário abriu.
         os.setNumeroOS(numeroReservado());
@@ -187,29 +181,6 @@ public class ControladoraRegistrarOS {
 
         this.osEmRegistro = os;
         return os;
-    }
-
-    /**
-     * Mensagens 1.5 e 1.6, com as guardas [seg = "Módulos"] e [seg = "Chaves"]:
-     * cria a OS na subclasse correspondente ao segmento.
-     */
-    private OrdemDeServico criarOrdemDeServico(String seg, int quilometragem, Date prazoEstimado,
-                                               String observacoes, String relatoInicial,
-                                               String condicaoRecebimento, String diagnosticoInicial,
-                                               String servicoExecutado) {
-        if (Segmento.CHAVES.equals(seg)) {
-            return new OrdemDeServicoChaves(quilometragem, prazoEstimado, observacoes, servicoExecutado);
-        }
-        return new OrdemDeServicoModulos(quilometragem, prazoEstimado, observacoes,
-                relatoInicial, condicaoRecebimento, diagnosticoInicial);
-    }
-
-    /** Número reservado no passo 1; se por algum motivo não houver, gera na hora. */
-    private String numeroReservado() throws SQLException {
-        if (osEmRegistro != null && osEmRegistro.getNumeroOS() != null) {
-            return osEmRegistro.getNumeroOS();
-        }
-        return ordemServicoDAO.gerarNumeroOS();
     }
 
     // =================================================================
@@ -345,6 +316,48 @@ public class ControladoraRegistrarOS {
         this.osEmRegistro = null;
         this.itemPendente = null;
         this.orcamentoDoItemPendente = null;
+    }
+
+    /**
+     * Passo 8.2 (V1) e botão "Ver atendimentos anteriores" do mockup.
+     * ACRÉSCIMO à modelagem - ver DOCUMENTACAO.md.
+     */
+    public List<String> consultarHistoricoTecnico(int idVeiculo) throws SQLException {
+        SimpleDateFormat formato = new SimpleDateFormat("dd/MM/yyyy");
+        List<String> linhas = new ArrayList<>();
+        for (OrdemDeServico os : ordemServicoDAO.buscarHistoricoTecnico(idVeiculo)) {
+            String data = os.getDataAbertura() == null ? "-" : formato.format(os.getDataAbertura());
+            linhas.add(os.getNumeroOS() + "  -  " + data
+                     + "  -  " + os.getSegmento()
+                     + "  -  " + os.getQuilometragem() + " km"
+                     + "  -  " + os.getStatusOS());
+        }
+        return linhas;
+    }
+
+    /**
+     * Mensagens 1.5 e 1.6, com as guardas [seg = "Módulos"] e [seg = "Chaves"]:
+     * cria a OS na subclasse correspondente ao segmento.
+     */
+    private OrdemDeServico criarOrdemDeServico(String seg, int quilometragem, Date prazoEstimado,
+                                               String observacoes, String relatoInicial,
+                                               String condicaoRecebimento, String diagnosticoInicial,
+                                               String servicoExecutado) {
+        if (!Segmento.CHAVES.equals(seg)) {
+            // 1.5  [seg = "Modulos"]
+            return new OrdemDeServicoModulos(quilometragem, prazoEstimado, observacoes,
+                    relatoInicial, condicaoRecebimento, diagnosticoInicial);
+        }
+        // 1.6  [seg = "Chaves"]
+        return new OrdemDeServicoChaves(quilometragem, prazoEstimado, observacoes, servicoExecutado);
+    }
+
+    /** Número reservado no passo 1; se por algum motivo não houver, gera na hora. */
+    private String numeroReservado() throws SQLException {
+        if (osEmRegistro != null && osEmRegistro.getNumeroOS() != null) {
+            return osEmRegistro.getNumeroOS();
+        }
+        return ordemServicoDAO.gerarNumeroOS();
     }
 
     /** Ordem de Serviço que está sendo montada, para a tela consultar. */

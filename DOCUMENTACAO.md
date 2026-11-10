@@ -112,7 +112,7 @@ mensagem 1 e dispara todas as outras.
 ```
 registrar-ordem-servico/
 ├── src/uniaoevolutions/
-│   ├── Main.java                                abre a tela (fora da modelagem)
+│   ├── MainRegistrarOrdemServico.java           abre a tela (fora da modelagem)
 │   ├── view/TelaRegistrarOrdemServico.java      INTERFACE      <<boundary>>
 │   ├── controle/ControladoraRegistrarOS.java    CONTROLADORA   <<control>>
 │   ├── negocio/                                 NEGÓCIO
@@ -133,8 +133,15 @@ registrar-ordem-servico/
 ├── bin/                             saída da compilação
 ├── .vscode/settings.json            aponta src/ e lib/ para o VS Code
 ├── README.md                        guia de instalação e execução
-└── DOCUMENTACAO.md                  este documento
+├── DOCUMENTACAO.md                  este documento
+└── RASTREABILIDADE.md               os 11 artefatos da 1ª iteração, um a um,
+                                     com o ponto do código que implementa cada um
 ```
+
+Este documento se organiza pelas **decisões de implementação**; o
+[RASTREABILIDADE.md](RASTREABILIDADE.md) percorre o caminho inverso, **artefato por artefato**, na
+ordem do PDF `artefatos elaborados na primeira iteração`. Quem vem da modelagem e quer achar o código
+começa por lá.
 
 São **18 arquivos-fonte**, e a pasta de cada um já diz a que camada ele pertence — a organização em
 pacotes é a própria arquitetura em camadas.
@@ -228,12 +235,12 @@ Usuario   tec = usuarioDAO.buscarUsuario(tecnicoSelecionado);        // 1.3
 String    seg = orc.getSegmentoPretendido();                         // 1.4
 
 OrdemDeServico os = criarOrdemDeServico(seg, ...);                   // 1.5 / 1.6
+os.sinalizarAbertura();                                              // 1.7
 os.associarOrcamento(orc);                                           // 1.8
 os.associarVeiculo(vei);                                             // 1.9
 os.associarTecnico(tec);                                             // 1.10
 
 os.validar();                                                        // RN-03 e RN-04
-os.sinalizarAbertura();                                              // 1.7
 os.setNumeroOS(numeroReservado());                                   // RN-07
 ordemServicoDAO.salvar(os);                                          // 1.11
 
@@ -242,12 +249,12 @@ orcamentoDAO.atualizarStatus(orc.getIdOrcamento(), STATUS_CONVERTIDO); // POS-02
 
 Duas observações de projeto:
 
-- `validar()` é chamado **antes** de `sinalizarAbertura()` e de `salvar()`. Se faltar campo
-  obrigatório, o fluxo para aí e **o banco nem chega a ser acessado** (é o FA-11A).
-- A ordem `1.8 → 1.9 → 1.10` antes de `1.7` inverte os números do diagrama de propósito: a RN-04 só
-  pode ser verificada depois que o técnico está associado, e não faz sentido marcar a OS como aberta
-  se ela ainda vai ser recusada na validação. As mensagens são todas as do diagrama; só a ordem entre
-  1.7 e 1.8–1.10 foi ajustada.
+- As mensagens estão **na ordem exata do diagrama**, 1.1 a 1.11. (Até a auditoria da 2ª iteração,
+  `sinalizarAbertura()` vinha depois de 1.8–1.10; ver RELATORIO_ITERACAO2.md, seção 10.2.)
+- `validar()` (RN-03 e RN-04) não é mensagem do diagrama: fica depois de 1.10, porque a RN-04 precisa
+  do técnico associado, e **antes** de `salvar()`. Se faltar campo obrigatório, o fluxo para aí e
+  **o banco nem chega a ser acessado** (FA-11A); a OS marcada como aberta em 1.7 só existia em
+  memória e é descartada.
 
 O método `criarOrdemDeServico` é o ponto que o Contrato de Operação descreve como *"um objeto os de
 OrdemDeServico foi criado, sendo da subclasse OrdemDeServicoModulos ou OrdemDeServicoChaves conforme
@@ -618,15 +625,15 @@ banco for diferente, edite as três constantes em `src/uniaoevolutions/persisten
 
 1. No VS Code: **File → Open Folder** e escolha a pasta `registrar-ordem-servico`.
    Precisa ser **essa** pasta — a que tem `src/` e `lib/` dentro.
-2. Abra `src/uniaoevolutions/Main.java`.
+2. Abra `src/uniaoevolutions/MainRegistrarOrdemServico.java`.
 3. Clique em **▶ Run** acima do método `main`.
 
-Pelo terminal, também funciona. O `-sourcepath` faz o `javac` compilar sozinho tudo o que a `Main`
+Pelo terminal, também funciona. O `-sourcepath` faz o `javac` compilar sozinho tudo o que a `MainRegistrarOrdemServico`
 referencia, então não é preciso listar os arquivos:
 
 ```cmd
-javac -encoding UTF-8 -d bin -cp "lib\mysql-connector-j-8.4.0.jar" -sourcepath src src\uniaoevolutions\Main.java
-java -cp "bin;lib\mysql-connector-j-8.4.0.jar" uniaoevolutions.Main
+javac -encoding UTF-8 -d bin -cp "lib\mysql-connector-j-8.4.0.jar" -sourcepath src src\uniaoevolutions\MainRegistrarOrdemServico.java
+java -cp "bin;lib\mysql-connector-j-8.4.0.jar" uniaoevolutions.MainRegistrarOrdemServico
 ```
 
 No Linux e no macOS, troque a `\` por `/` e o `;` do classpath por `:`.

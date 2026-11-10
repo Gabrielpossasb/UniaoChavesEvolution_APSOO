@@ -9,6 +9,10 @@ package uniaoevolutions.negocio;
  *
  * ACRÉSCIMO à modelagem: o atributo quantidade, exigido pela coluna "Qtd." do
  * mockup e por incluirItemOrdemServico(). Ver DOCUMENTACAO.md.
+ *
+ * Diagrama de Classes v2 (2ª iteração): <<create>> ItemOrcamento(servico,
+ * valorProposto), getValorProposto() e setValorProposto(valor). Os itens do
+ * Solicitar Orçamento têm sempre quantidade 1 (o v2 não tem quantidade).
  */
 public class ItemOrcamento {
 
@@ -21,11 +25,27 @@ public class ItemOrcamento {
         this.quantidade = 1;
     }
 
+    /** <<create>> do Diagrama de Classes v2 - passo 9 (incluirItem). */
+    public ItemOrcamento(ServicoBase servico, double valorProposto) {
+        this.servicoBase = servico;
+        this.valorProposto = valorProposto;
+        this.quantidade = 1;
+    }
+
     public ItemOrcamento(int idItemOrcamento, double valorProposto, int quantidade, ServicoBase servicoBase) {
         this.idItemOrcamento = idItemOrcamento;
         this.valorProposto = valorProposto;
         this.quantidade = quantidade;
         this.servicoBase = servicoBase;
+    }
+
+    public double getValorProposto() {
+        return valorProposto;
+    }
+
+    /** Operação do Diagrama de Classes v2 - FA-11B (alterarValorItem). */
+    public void setValorProposto(double valor) {
+        this.valorProposto = valor;
     }
 
     /** Coluna "Subtotal" do mockup: quantidade x valor unitário. */
@@ -44,14 +64,6 @@ public class ItemOrcamento {
 
     public void setIdItemOrcamento(int idItemOrcamento) {
         this.idItemOrcamento = idItemOrcamento;
-    }
-
-    public double getValorProposto() {
-        return valorProposto;
-    }
-
-    public void setValorProposto(double valorProposto) {
-        this.valorProposto = valorProposto;
     }
 
     public int getQuantidade() {

@@ -5,8 +5,8 @@ import uniaoevolutions.view.TelaRegistrarOrdemServico;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
-/** Ponto de entrada: abre a tela do caso de uso. Não faz parte da modelagem. */
-public class Main {
+/** Ponto de entrada do caso de uso Registrar Ordem de Serviço (1ª iteração). Não faz parte da modelagem. */
+public class MainRegistrarOrdemServico {
 
     public static void main(String[] args) {
         try {

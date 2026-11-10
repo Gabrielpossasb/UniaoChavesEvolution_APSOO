@@ -1,11 +1,22 @@
 package uniaoevolutions.negocio;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- * Veículo atendido pela União Evolutions. Os 13 atributos são os do Diagrama
- * de Classes, na mesma ordem; idVeiculo é a PK de TB_Veiculo.
+ * Veículo atendido pela União Evolutions; idVeiculo é a PK de TB_Veiculo.
  *
- * De tipoModulo a senhaRadio estão os dados que a tela exibe nos blocos "Dados
- * Técnicos" do mockup: eles pertencem ao veículo, não à Ordem de Serviço.
+ * Diagrama de Classes v2 (2ª iteração): marca, modelo, anoModelo,
+ * motorizacao, placa, numeroChassi, o construtor <<create>> Veiculo(placa,
+ * marca, modelo, anoModelo, motorizacao, numeroChassi) (FA-04) e
+ * associarModulo(mod) (mensagem 1.9), com a associação
+ * "Veiculo 1 possui 0..* ModuloECU".
+ *
+ * De tipoModulo a senhaRadio estão os campos do Diagrama de Classes da 1ª
+ * iteração, mantidos porque a TelaRegistrarOrdemServico os exibe. No v2 eles
+ * saíram do Veiculo e foram para ModuloECU e InformacoesSegurancaVeiculo; por
+ * isso a OrcamentoDAO os preenche a partir de TB_ModuloECU e
+ * TB_InformacoesSegurancaVeiculo (ver RELATORIO_ITERACAO2.md).
  */
 public class Veiculo {
 
@@ -24,7 +35,43 @@ public class Veiculo {
     private String senhaAlarme;
     private String senhaRadio;
 
+    /** "Veiculo 1 possui 0..* ModuloECU" (Diagrama de Classes v2). */
+    private final List<ModuloECU> modulos = new ArrayList<>();
+
+    /** "Veiculo 1 possui 0..1 InformacoesSegurancaVeiculo" (Diagrama de Classes v2); null = não tem. */
+    private InformacoesSegurancaVeiculo informacoesSeguranca;
+
     public Veiculo() {
+    }
+
+    /** <<create>> do Diagrama de Classes v2 - cadastro do FA-04.3. */
+    public Veiculo(String placa, String marca, String modelo, int anoModelo,
+                   String motorizacao, String numeroChassi) {
+        this.placa = placa;
+        this.marca = marca;
+        this.modelo = modelo;
+        this.anoModelo = anoModelo;
+        this.motorizacao = motorizacao;
+        this.numeroChassi = numeroChassi;
+    }
+
+    /** Mensagem 1.9 do Diagrama de Comunicação: [mod criado] associarModulo(mod). */
+    public void associarModulo(ModuloECU mod) {
+        if (mod != null && !modulos.contains(mod)) {
+            modulos.add(mod);
+        }
+    }
+
+    public List<ModuloECU> getModulos() {
+        return modulos;
+    }
+
+    public InformacoesSegurancaVeiculo getInformacoesSeguranca() {
+        return informacoesSeguranca;
+    }
+
+    public void setInformacoesSeguranca(InformacoesSegurancaVeiculo informacoesSeguranca) {
+        this.informacoesSeguranca = informacoesSeguranca;
     }
 
     public int getIdVeiculo() {
