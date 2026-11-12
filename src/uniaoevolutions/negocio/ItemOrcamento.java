@@ -1,18 +1,8 @@
 package uniaoevolutions.negocio;
 
 /**
- * Item de um orçamento: um serviço ou peça com o valor proposto ao cliente.
- *
- * Ligado a Orcamento por COMPOSIÇÃO ("compoe", 1 para 1..*): nasce e morre com
- * o seu orçamento, o que no banco virou a PK composta
- * (idItemOrcamento, idOrcamento) de TB_ItemOrcamento.
- *
- * ACRÉSCIMO à modelagem: o atributo quantidade, exigido pela coluna "Qtd." do
- * mockup e por incluirItemOrdemServico(). Ver DOCUMENTACAO.md.
- *
- * Diagrama de Classes v2 (2ª iteração): <<create>> ItemOrcamento(servico,
- * valorProposto), getValorProposto() e setValorProposto(valor). Os itens do
- * Solicitar Orçamento têm sempre quantidade 1 (o v2 não tem quantidade).
+ * Item de orçamento (composição 1..* de Orcamento; PK composta no banco).
+ * ACRÉSCIMO: quantidade (coluna "Qtd." do mockup da OS); no Solicitar Orçamento é sempre 1.
  */
 public class ItemOrcamento {
 
@@ -25,7 +15,7 @@ public class ItemOrcamento {
         this.quantidade = 1;
     }
 
-    /** <<create>> do Diagrama de Classes v2 - passo 9 (incluirItem). */
+    /** <<create>> (passo 9). */
     public ItemOrcamento(ServicoBase servico, double valorProposto) {
         this.servicoBase = servico;
         this.valorProposto = valorProposto;
@@ -43,17 +33,17 @@ public class ItemOrcamento {
         return valorProposto;
     }
 
-    /** Operação do Diagrama de Classes v2 - FA-11B (alterarValorItem). */
+    /** FA-11B (alterarValorItem). */
     public void setValorProposto(double valor) {
         this.valorProposto = valor;
     }
 
-    /** Coluna "Subtotal" do mockup: quantidade x valor unitário. */
+    /** "Subtotal": quantidade x valor. */
     public double getSubtotal() {
         return quantidade * valorProposto;
     }
 
-    /** Coluna "Serviço / Peça" do mockup: vem do ServicoBase. */
+    /** "Serviço / Peça": descrição do ServicoBase. */
     public String getDescricao() {
         return servicoBase == null ? "" : servicoBase.getDescricao();
     }

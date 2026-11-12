@@ -1,13 +1,6 @@
 package uniaoevolutions.negocio;
 
-/**
- * Informações de segurança de um veículo (senhas e código mecânico).
- *
- * Diagrama de Classes v2: codigoMecanico, senhaImobilizador, senhaAlarme,
- * senhaRadio, sem operações. Associação "Veiculo 1 possui 0..1
- * InformacoesSegurancaVeiculo". Tabela TB_InformacoesSegurancaVeiculo, cuja
- * PK é também FK para TB_Veiculo (a classe não tem identificador próprio).
- */
+/** Senhas e código mecânico do veículo (Diagrama de Classes v2). PK da tabela = FK de TB_Veiculo. */
 public class InformacoesSegurancaVeiculo {
 
     private String codigoMecanico;

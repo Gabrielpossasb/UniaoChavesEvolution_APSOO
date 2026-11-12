@@ -1,19 +1,6 @@
 package uniaoevolutions.negocio;
 
-/**
- * Módulo / central eletrônica (ECU) de um veículo.
- *
- * Diagrama de Classes v2: tipoModulo, modeloECU, identificacaoModulo e o
- * construtor <<create>> ModuloECU(tipoModulo, modeloECU, identificacaoModulo)
- * - mensagem 1.8 do Diagrama de Comunicação do Solicitar Orçamento.
- *
- * Associações: "Veiculo 1 possui 0..* ModuloECU" e
- * "OrcamentoModulos 0..* refere-se a 0..1 ModuloECU".
- *
- * idModuloECU é a PK de TB_ModuloECU no Mapeamento OR v2; vale 0 enquanto o
- * módulo não foi gravado (é assim que a OrcamentoDAO sabe que precisa
- * inseri-lo).
- */
+/** Módulo (ECU) de um veículo (Diagrama de Classes v2). idModuloECU = 0 enquanto não gravado. */
 public class ModuloECU {
 
     private int idModuloECU;
@@ -24,7 +11,7 @@ public class ModuloECU {
     public ModuloECU() {
     }
 
-    /** <<create>> do Diagrama de Classes v2 (mensagem 1.8). */
+    /** <<create>> (mensagem 1.8). */
     public ModuloECU(String tipoModulo, String modeloECU, String identificacaoModulo) {
         this.tipoModulo = tipoModulo;
         this.modeloECU = modeloECU;

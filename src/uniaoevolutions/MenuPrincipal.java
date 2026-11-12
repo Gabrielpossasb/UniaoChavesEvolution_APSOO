@@ -27,17 +27,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * ACRÉSCIMO: menu para abrir as telas dos dois casos de uso sem digitar nada
- * na linha de comando. Não faz parte da modelagem (como o MainRegistrarOrdemServico), por isso fica
- * fora do pacote view e não passa pelas controladoras.
- *
- * Não há caso de uso de autenticação: o usuário escolhido na lista faz o papel
- * do usuário logado (PRE-01) do Solicitar Orçamento. A lista usa só métodos de
- * UsuarioDAO que já estão no diagrama de classes (buscarTecnicosHabilitados
- * dos dois segmentos, que juntos trazem todos os técnicos e o administrador).
- *
- * Quando a tela aberta é fechada (Voltar/Cancelar, Desistir ou o "X"), o
- * menu volta a aparecer.
+ * ACRÉSCIMO: menu para abrir as duas telas, fora da modelagem. O usuário escolhido
+ * faz o papel do usuário logado (PRE-01); a lista vem de UsuarioDAO.buscarTecnicosHabilitados.
+ * Ao fechar a tela (Voltar / Cancelar ou Desistir), o menu reaparece.
  */
 public class MenuPrincipal extends JFrame {
 
@@ -104,7 +96,7 @@ public class MenuPrincipal extends JFrame {
         return componente;
     }
 
-    /** Preenche a lista de usuários; também serve de teste da conexão com o banco. */
+    /** Preenche a lista de usuários (e testa a conexão). */
     private void carregarUsuarios() {
         comboUsuario.removeAllItems();
         try {
@@ -128,7 +120,7 @@ public class MenuPrincipal extends JFrame {
         }
     }
 
-    /** Explica as causas mais comuns no XAMPP, com a mensagem original do driver. */
+    /** Causas comuns no XAMPP e a mensagem do driver. */
     private static String mensagemDeConexao(SQLException erro) {
         String texto = String.valueOf(erro.getMessage());
         String dica;
@@ -149,7 +141,7 @@ public class MenuPrincipal extends JFrame {
     }
 
     private void abrirRegistrarOS() {
-        usarLookAndFeel(UIManager.getSystemLookAndFeelClassName());   // o mesmo do MainRegistrarOrdemServico
+        usarLookAndFeel(UIManager.getSystemLookAndFeelClassName());   // como no MainRegistrarOrdemServico
         abrir(new TelaRegistrarOrdemServico());
     }
 
@@ -158,11 +150,11 @@ public class MenuPrincipal extends JFrame {
         if (usuario == null) {
             return;
         }
-        usarLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());   // o mesmo do MainSolicitarOrcamento
+        usarLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());   // como no MainSolicitarOrcamento
         abrir(new TelaSolicitarOrcamento(usuario.getIdUsuario()));
     }
 
-    /** Esconde o menu enquanto a tela estiver aberta e o mostra de novo quando ela fechar. */
+    /** Esconde o menu enquanto a tela estiver aberta. */
     private void abrir(JFrame tela) {
         tela.addWindowListener(new WindowAdapter() {
             @Override
@@ -179,7 +171,7 @@ public class MenuPrincipal extends JFrame {
         try {
             UIManager.setLookAndFeel(classe);
         } catch (Exception ignorado) {
-            // Sem o look and feel, usa o padrão do Swing.
+            // Sem ele, fica o padrão do Swing.
         }
     }
 

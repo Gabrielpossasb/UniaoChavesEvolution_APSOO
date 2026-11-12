@@ -21,30 +21,18 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * DAO da hierarquia Orcamento - tabelas TB_Orcamento, TB_OrcamentoModulos,
- * TB_OrcamentoChaves e TB_ItemOrcamento, mais os JOINs com TB_Cliente,
- * TB_Veiculo, TB_ModuloECU, TB_InformacoesSegurancaVeiculo e TB_ServicoBase.
+ * DAO da hierarquia Orcamento (TB_Orcamento, TB_OrcamentoModulos, TB_OrcamentoChaves,
+ * TB_ItemOrcamento). Herança em "uma tabela por subclasse" (PK da subclasse = FK):
  *
- * Operações do Diagrama de Classes v2: buscarOrcamento(id),
- * buscarOrcamentosAprovados(), gerarNumeroOrcamento(), salvar(orc),
- * salvarRascunho(orc), buscarAtendimentosModulo(mod) e listarOrcamentos().
- *
- * É ONDE A HERANÇA DO ORÇAMENTO VIRA TABELA, com a mesma estratégia da
- * OrdemServicoDAO ("uma tabela por subclasse", PK da subclasse = FK):
- *
- *     Orcamento         -> TB_Orcamento
- *       |_ OrcamentoModulos -> TB_OrcamentoModulos (PK = FK)
- *       |_ OrcamentoChaves  -> TB_OrcamentoChaves  (PK = FK)
+ *     Orcamento -> TB_Orcamento
+ *       |_ OrcamentoModulos -> TB_OrcamentoModulos
+ *       |_ OrcamentoChaves  -> TB_OrcamentoChaves
  */
 public class OrcamentoDAO {
 
     /**
-     * Colunas do orçamento e das associações com Cliente e Veiculo.
-     *
-     * 2ª iteração: TB_Orcamento não tem mais segmentoPretendido - o segmento
-     * é dado pela tabela de subclasse que tem linha. E os campos de módulo e
-     * de senhas que a tela do Registrar OS exibe saíram de TB_Veiculo: vêm de
-     * TB_ModuloECU (o módulo do orçamento) e de TB_InformacoesSegurancaVeiculo.
+     * Colunas do orçamento, cliente e veículo. O segmento vem da subclasse com linha;
+     * módulo e senhas vêm de TB_ModuloECU e TB_InformacoesSegurancaVeiculo.
      */
     private static final String SELECT_ORCAMENTO =
             "SELECT o.idOrcamento, o.numero, o.dataSolicitacao, o.dataValidade, o.origemAtendimento, "
@@ -66,10 +54,7 @@ public class OrcamentoDAO {
     // 1ª iteração - Registrar Ordem de Serviço
     // =================================================================
 
-    /**
-     * Mensagem 1.1 do Registrar OS: devolve o orçamento com cliente, veículo e
-     * itens carregados, ou null se o código não existir.
-     */
+    /** Mensagem 1.1 do Registrar OS: orçamento com cliente, veículo e itens, ou null. */
     public Orcamento buscarOrcamento(int id) throws SQLException {
         String sql = SELECT_ORCAMENTO + " WHERE o.idOrcamento = ?";
         Connection conexao = Conexao.conectar();
@@ -88,10 +73,7 @@ public class OrcamentoDAO {
         }
     }
 
-    /**
-     * Passo 2 do Registrar OS (RN-01 / PRE-02): orçamentos "Aprovado pelo
-     * cliente" ainda não convertidos, para a combo "Orçamento associado".
-     */
+    /** Passo 2 do Registrar OS (RN-01): aprovados e não convertidos. */
     public List<Orcamento> buscarOrcamentosAprovados() throws SQLException {
         String sql = SELECT_ORCAMENTO
                    + " WHERE o.status = ? "
@@ -106,10 +88,7 @@ public class OrcamentoDAO {
     // 2ª iteração - Solicitar Orçamento
     // =================================================================
 
-    /**
-     * Passo 1 e mensagem 1.2: próximo número ORC-AAAA-NNNN (RN-08), "com
-     * sequência reiniciada a cada ano" - o LIKE só olha os números do ano.
-     */
+    /** Passo 1 e mensagem 1.2: próximo ORC-AAAA-NNNN; a sequência reinicia a cada ano (RN-08). */
     public String gerarNumeroOrcamento() throws SQLException {
         int ano = Calendar.getInstance().get(Calendar.YEAR);
         String prefixo = String.format("ORC-%d-", ano);
@@ -131,28 +110,21 @@ public class OrcamentoDAO {
         }
     }
 
-    /**
-     * Pós-condição "o objeto orc foi persistido" do Contrato de Operação de
-     * registrarOrcamento. Grava, numa única transação, o módulo novo (se a
-     * mensagem 1.8 o criou), a superclasse, a subclasse e os itens.
-     */
+    /** Pós-condição do contrato: grava, numa transação, módulo novo (1.8), superclasse, subclasse e itens. */
     public void salvar(Orcamento orc) throws SQLException {
         gravar(orc);
     }
 
-    /** FA-12D: grava o rascunho (situação "Rascunho", sem número e sem validade). */
+    /** FA-12D: grava o rascunho. */
     public void salvarRascunho(Orcamento orc) throws SQLException {
         gravar(orc);
     }
 
-    /**
-     * Passo 8.2 da V1: orçamentos registrados anteriormente para o mesmo
-     * módulo. Rascunhos não são atendimentos, por isso ficam de fora.
-     */
+    /** Passo 8.2 (V1): orçamentos anteriores do mesmo módulo, sem rascunhos. */
     public List<Orcamento> buscarAtendimentosModulo(ModuloECU mod) throws SQLException {
         List<Orcamento> atendimentos = new ArrayList<>();
         if (mod == null || mod.getIdModuloECU() == 0) {
-            return atendimentos;   // módulo ainda não gravado: não há histórico
+            return atendimentos;   // módulo novo: sem histórico
         }
         String sql = SELECT_ORCAMENTO
                    + " WHERE om.idModuloECU = ? AND o.status <> ? "
@@ -172,16 +144,13 @@ public class OrcamentoDAO {
         }
     }
 
-    /** FA-00.4 e FA-12D: a listagem de orçamentos, do mais recente ao mais antigo. */
+    /** FA-00.4 e FA-12D: do mais recente ao mais antigo. */
     public List<Orcamento> listarOrcamentos() throws SQLException {
         String sql = SELECT_ORCAMENTO + " ORDER BY o.idOrcamento DESC";
         return buscarLista(sql, null);
     }
 
-    /**
-     * Atualiza a situação do orçamento.
-     * ACRÉSCIMO da 1ª iteração (POS-02 e RN-05 do Registrar OS).
-     */
+    /** ACRÉSCIMO (1ª iteração; POS-02 e RN-05 do Registrar OS). */
     public void atualizarStatus(int idOrcamento, String status) throws SQLException {
         String sql = "UPDATE TB_Orcamento SET status = ? WHERE idOrcamento = ?";
         Connection conexao = Conexao.conectar();
@@ -194,10 +163,7 @@ public class OrcamentoDAO {
         }
     }
 
-    /**
-     * Inclui um serviço ou peça não previsto e soma o valor ao valorEstimado.
-     * ACRÉSCIMO da 1ª iteração, exigido pelo FA-11B do Registrar OS.
-     */
+    /** ACRÉSCIMO (1ª iteração; FA-11B do Registrar OS): inclui o item e soma ao valorEstimado. */
     public void incluirItem(int idOrcamento, String descricao, String categoria,
                             int quantidade, double valor, String justificativa) throws SQLException {
         Connection conexao = Conexao.conectar();
@@ -223,10 +189,7 @@ public class OrcamentoDAO {
     // Gravação da hierarquia (2ª iteração)
     // -----------------------------------------------------------------
 
-    /**
-     * As linhas do módulo, da superclasse, da subclasse e dos itens têm de
-     * nascer juntas: ou todas, ou nenhuma (FA-13: nada fica pela metade).
-     */
+    /** Grava tudo ou nada (FA-13). */
     private void gravar(Orcamento orc) throws SQLException {
         Connection conexao = Conexao.conectar();
         boolean moduloNovo = false;
@@ -239,8 +202,7 @@ public class OrcamentoDAO {
                 int id = inserirSuperclasse(conexao, orc);
                 orc.setIdOrcamento(id);
                 inserirSubclasse(conexao, orc, id);
-                // Os ids gerados para os itens não voltam para os objetos: os
-                // itens ainda são identificados pelo id da sessão de registro.
+                // Os itens mantêm o id da sessão.
                 for (ItemOrcamento item : orc.getItens()) {
                     inserirItem(conexao, id, item.getServicoBase().getIdServicoBase(),
                             item.getQuantidade(), item.getValorProposto());
@@ -248,8 +210,7 @@ public class OrcamentoDAO {
                 conexao.commit();
             } catch (SQLException erro) {
                 conexao.rollback();
-                // FA-13: desfeito o INSERT, o objeto volta ao estado de antes,
-                // para que a nova tentativa grave o módulo de novo.
+                // FA-13: restaura o objeto para a nova tentativa gravar o módulo.
                 orc.setIdOrcamento(0);
                 if (moduloNovo) {
                     ((OrcamentoModulos) orc).getModulo().setIdModuloECU(0);
@@ -263,10 +224,7 @@ public class OrcamentoDAO {
         }
     }
 
-    /**
-     * Mensagem 1.8 criou um ModuloECU novo (id 0): ele é gravado antes do
-     * orçamento, porque TB_OrcamentoModulos.idModuloECU aponta para ele.
-     */
+    /** Módulo novo (1.8, id 0): gravado antes do orçamento, que aponta para ele. */
     private boolean inserirModuloSeNovo(Connection conexao, OrcamentoModulos orc) throws SQLException {
         ModuloECU mod = orc.getModulo();
         if (mod == null || mod.getIdModuloECU() != 0) {
@@ -305,10 +263,7 @@ public class OrcamentoDAO {
         }
     }
 
-    /**
-     * INSERT na subclasse, com o MESMO id da superclasse. O instanceof traduz
-     * o tipo do objeto na tabela em que a linha filha é gravada.
-     */
+    /** INSERT na tabela da subclasse, com o id da superclasse. */
     private void inserirSubclasse(Connection conexao, Orcamento orc, int id) throws SQLException {
         if (orc instanceof OrcamentoModulos) {
             OrcamentoModulos m = (OrcamentoModulos) orc;
@@ -420,10 +375,7 @@ public class OrcamentoDAO {
         }
     }
 
-    /**
-     * Itens do orçamento (composição "compõe" 1..*) com o serviço de catálogo
-     * de cada um.
-     */
+    /** Itens do orçamento (composição 1..*) com o serviço de cada um. */
     private void carregarItens(Connection conexao, Orcamento orcamento) throws SQLException {
         String sql = "SELECT i.idItemOrcamento, i.valorProposto, i.quantidade, "
                    + "       s.idServicoBase, s.descricao, s.categoria, s.observacoesTecnicas "
@@ -452,11 +404,7 @@ public class OrcamentoDAO {
         }
     }
 
-    /**
-     * Monta Orcamento, Cliente e Veiculo a partir da linha do JOIN. O objeto
-     * é um Orcamento simples, com o segmento no campo segmentoPretendido:
-     * é a forma que a 1ª iteração usa e basta para as listagens.
-     */
+    /** Monta Orcamento (simples, com segmentoPretendido), Cliente e Veiculo da linha do JOIN. */
     private Orcamento montarOrcamento(ResultSet resultado) throws SQLException {
         Orcamento orcamento = new Orcamento();
         orcamento.setIdOrcamento(resultado.getInt("idOrcamento"));
@@ -480,10 +428,7 @@ public class OrcamentoDAO {
         return orcamento;
     }
 
-    /**
-     * Monta o Veiculo com as colunas de TB_Veiculo e, para a tela do Registrar
-     * OS, os dados de módulo e de segurança vindos das tabelas novas.
-     */
+    /** Monta o Veiculo, com os dados de módulo e segurança para o Registrar OS. */
     private Veiculo montarVeiculo(ResultSet resultado) throws SQLException {
         Veiculo veiculo = new Veiculo();
         veiculo.setIdVeiculo(resultado.getInt("idVeiculo"));
@@ -500,7 +445,7 @@ public class OrcamentoDAO {
         veiculo.setSenhaImobilizador(resultado.getString("senhaImobilizador"));
         veiculo.setSenhaAlarme(resultado.getString("senhaAlarme"));
         veiculo.setSenhaRadio(resultado.getString("senhaRadio"));
-        // "possui 0..1 InformacoesSegurancaVeiculo": só existe se há linha na tabela.
+        // possui 0..1 InformacoesSegurancaVeiculo.
         if (resultado.getObject("idSeguranca") != null) {
             InformacoesSegurancaVeiculo seguranca = new InformacoesSegurancaVeiculo();
             seguranca.setCodigoMecanico(resultado.getString("codigoMecanico"));
@@ -521,7 +466,7 @@ public class OrcamentoDAO {
         }
     }
 
-    /** Converte a java.util.Date do modelo na java.sql.Date do JDBC. */
+    /** java.util.Date para java.sql.Date. */
     private java.sql.Date paraDataSql(Date data) {
         return data == null ? null : new java.sql.Date(data.getTime());
     }

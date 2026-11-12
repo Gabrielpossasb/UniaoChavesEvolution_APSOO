@@ -4,25 +4,14 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * Ordem de Serviço da União Evolutions.
- *
- * ABSTRATA (itálico no Diagrama de Classes): toda OS é de Módulos ou de
- * Chaves, conforme o segmento do orçamento de origem.
- *
- * Associações do Diagrama de Classes: 1 originada de 0..1 Orcamento,
- * 0..* refere-se a 1 Veiculo, 0..* executada por 1 Usuario.
+ * Ordem de Serviço. Abstrata (itálico no diagrama): toda OS é de Módulos ou de Chaves.
+ * Associações: 1 Orcamento, 1 Veiculo, 1 Usuario.
  */
 public abstract class OrdemDeServico {
 
-    /**
-     * Situação gravada por sinalizarAbertura().
-     *
-     * DIVERGÊNCIA: o Diagrama de Comunicação manda "Aberta" (mensagem 1.7.2),
-     * a POS-01 e o mockup falam em "Em execução". Seguimos o diagrama - ver
-     * DOCUMENTACAO.md.
-     */
+    /** Mensagem 1.7.2. O diagrama diz "Aberta"; POS-01 e mockup dizem "Em execução". */
     public static final String STATUS_ABERTA = "Aberta";
-    /** Situação do rascunho do FA-11C ("sem número definitivo"). */
+    /** FA-11C. */
     public static final String STATUS_RASCUNHO = "Rascunho";
 
     private int idOrdemDeServico;
@@ -53,13 +42,7 @@ public abstract class OrdemDeServico {
     // Operações do Diagrama de Classes
     // -----------------------------------------------------------------
 
-    /**
-     * Mensagem 1.7: marca a abertura da OS executando as mensagens aninhadas
-     * 1.7.1 setDataAbertura() e 1.7.2 setStatusOs("Aberta").
-     *
-     * As duas são privadas para que não se grave uma data de abertura sem o
-     * status correspondente.
-     */
+    /** Mensagem 1.7: 1.7.1 e 1.7.2 (privadas, para data e status irem juntos). */
     public void sinalizarAbertura() {
         setDataAbertura(new Date());
         setStatusOS(STATUS_ABERTA);
@@ -92,17 +75,10 @@ public abstract class OrdemDeServico {
     // Regras de negócio
     // -----------------------------------------------------------------
 
-    /**
-     * "Módulos" ou "Chaves": cada subclasse sabe o seu próprio segmento, e por
-     * isso a tela e as DAOs não precisam perguntar o tipo do objeto.
-     */
+    /** "Módulos" ou "Chaves", definido pela subclasse. */
     public abstract String getSegmento();
 
-    /**
-     * RN-03: campos obrigatórios comuns a qualquer OS. Cada subclasse
-     * acrescenta os seus chamando super.validar(). A IllegalArgumentException
-     * leva a mensagem que o FA-11A exibe.
-     */
+    /** RN-03 (campos comuns; subclasses acrescentam) e RN-04. Erro: IllegalArgumentException (FA-11A). */
     public void validar() {
         if (quilometragem <= 0) {
             throw new IllegalArgumentException("Informe a quilometragem atual do veículo.");
@@ -119,19 +95,19 @@ public abstract class OrdemDeServico {
         if (tecnico == null) {
             throw new IllegalArgumentException("Selecione o técnico responsável pela Ordem de Serviço.");
         }
-        // RN-04: o técnico tem de ser habilitado no segmento.
+        // RN-04
         if (!tecnico.habilitadoEm(getSegmento())) {
             throw new IllegalArgumentException(
                     "O técnico selecionado não é habilitado no segmento " + getSegmento() + ".");
         }
     }
 
-    /** POS-03: os itens vêm do orçamento, então o total da OS é o dele. */
+    /** POS-03: total do orçamento. */
     public double getValorTotal() {
         return orcamento == null ? 0 : orcamento.getValorTotal();
     }
 
-    /** POS-03: itens herdados do orçamento, exibidos na tabela do mockup. */
+    /** POS-03: itens do orçamento. */
     public List<ItemOrcamento> getItens() {
         return orcamento == null ? List.of() : orcamento.getItens();
     }
@@ -164,20 +140,13 @@ public abstract class OrdemDeServico {
         return statusOS;
     }
 
-    /**
-     * FA-11C: grava a OS com situação "Rascunho", sem passar por
-     * sinalizarAbertura().
-     */
+    /** FA-11C: situação "Rascunho", sem sinalizarAbertura(). */
     public void marcarComoRascunho(Date dataAbertura) {
         this.dataAbertura = dataAbertura;
         this.statusOS = STATUS_RASCUNHO;
     }
 
-    /**
-     * Repõe a data e a situação que estavam gravadas no banco. Como
-     * setDataAbertura e setStatusOS são privados, é o único caminho para a DAO
-     * reconstruir uma OS existente.
-     */
+    /** Para a DAO restaurar data e situação gravadas (os setters são privados). */
     public void restaurarEstadoPersistido(Date dataAbertura, String statusOS) {
         this.dataAbertura = dataAbertura;
         this.statusOS = statusOS;

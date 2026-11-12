@@ -11,21 +11,14 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * DAO da classe Veiculo - tabela TB_Veiculo.
- *
- * Operações do Diagrama de Classes v2: buscarPorPlaca(placa) e salvar(vei).
- */
+/** DAO de Veiculo (TB_Veiculo). */
 public class VeiculoDAO {
 
     private static final String SELECT_VEICULO =
             "SELECT v.idVeiculo, v.marca, v.modelo, v.anoModelo, v.motorizacao, v.placa, v.numeroChassi "
           + "  FROM TB_Veiculo v ";
 
-    /**
-     * Passo 4: veículo pela placa, ou null. A comparação ignora o hífen, para
-     * "QAF7C21" e "QAF-7C21" acharem o mesmo veículo.
-     */
+    /** Passo 4: pela placa, ignorando o hífen; null se não houver. */
     public Veiculo buscarPorPlaca(String placa) throws SQLException {
         String sql = SELECT_VEICULO + " WHERE REPLACE(v.placa, '-', '') = REPLACE(?, '-', '')";
         Connection conexao = Conexao.conectar();
@@ -39,7 +32,7 @@ public class VeiculoDAO {
         }
     }
 
-    /** FA-04.3: grava o veículo e devolve no objeto o id gerado. */
+    /** FA-04.3; o objeto recebe o id gerado. */
     public void salvar(Veiculo vei) throws SQLException {
         String sql = "INSERT INTO TB_Veiculo (marca, modelo, anoModelo, motorizacao, placa, numeroChassi) "
                    + " VALUES (?, ?, ?, ?, ?, ?)";
@@ -63,13 +56,7 @@ public class VeiculoDAO {
         }
     }
 
-    /**
-     * ACRÉSCIMO à modelagem: passo 3, "a relação de veículos a ele
-     * vinculados". No Diagrama de Classes v2 não há associação direta entre
-     * Cliente e Veiculo, nem FK de cliente em TB_Veiculo: o vínculo (RN-02) é
-     * formado pelos orçamentos. Por isso a relação são os veículos dos
-     * orçamentos do cliente.
-     */
+    /** ACRÉSCIMO (passo 3): veículos dos orçamentos do cliente (o vínculo da RN-02 é o orçamento). */
     public List<Veiculo> buscarPorCliente(Cliente cli) throws SQLException {
         String sql = SELECT_VEICULO
                    + " WHERE v.idVeiculo IN (SELECT o.idVeiculo FROM TB_Orcamento o WHERE o.idCliente = ?) "

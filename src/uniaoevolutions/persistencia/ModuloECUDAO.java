@@ -10,21 +10,10 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * DAO da classe ModuloECU - tabela TB_ModuloECU.
- *
- * Operação do Diagrama de Classes v2: buscarModulo(vei, identificacaoModulo).
- * A gravação de um módulo novo acontece dentro da transação de
- * OrcamentoDAO.salvar, porque o diagrama não dá a esta DAO uma operação de
- * salvar e o módulo só pode nascer junto com o orçamento (mensagem 1.8).
- */
+/** DAO de ModuloECU (TB_ModuloECU). O módulo novo é gravado na transação de OrcamentoDAO.salvar. */
 public class ModuloECUDAO {
 
-    /**
-     * Mensagem 1.7 e passo 8.2: o módulo do veículo com a identificação
-     * informada, ou null (mensagem 1.8 cria). Sem identificação (FAV-8.1 ou
-     * campo opcional em branco) não há como reconhecer o módulo: null.
-     */
+    /** Mensagem 1.7: módulo do veículo com a identificação; null se não houver ou sem identificação. */
     public ModuloECU buscarModulo(Veiculo vei, String identificacaoModulo) throws SQLException {
         if (vei == null || identificacaoModulo == null || identificacaoModulo.isBlank()) {
             return null;
@@ -52,11 +41,7 @@ public class ModuloECUDAO {
         }
     }
 
-    /**
-     * ACRÉSCIMO à modelagem: os módulos já registrados do veículo
-     * ("Veiculo 1 possui 0..* ModuloECU"), oferecidos para o Técnico
-     * selecionar em vez de digitar.
-     */
+    /** ACRÉSCIMO: módulos já registrados do veículo, para seleção. */
     public List<ModuloECU> buscarModulosDoVeiculo(Veiculo vei) throws SQLException {
         List<ModuloECU> modulos = new ArrayList<>();
         if (vei == null || vei.getIdVeiculo() == 0) {

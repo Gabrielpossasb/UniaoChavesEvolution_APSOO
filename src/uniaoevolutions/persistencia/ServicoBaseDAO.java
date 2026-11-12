@@ -9,20 +9,10 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * DAO da classe ServicoBase - tabela TB_ServicoBase.
- *
- * Operações do Diagrama de Classes v2: buscarPorCategoria(categoria) e
- * buscarServico(id).
- */
+/** DAO de ServicoBase (TB_ServicoBase). */
 public class ServicoBaseDAO {
 
-    /**
-     * Passo 7 (RN-03): serviços base da categoria do segmento.
-     *
-     * O filtro "Justificativa%" deixa de fora os itens avulsos que o FA-11B do
-     * Registrar OS grava em TB_ServicoBase - eles não são serviços de catálogo.
-     */
+    /** Passo 7 (RN-03). Exclui os itens avulsos do FA-11B do Registrar OS ("Justificativa%"). */
     public List<ServicoBase> buscarPorCategoria(String categoria) throws SQLException {
         String sql = "SELECT idServicoBase, descricao, categoria, observacoesTecnicas FROM TB_ServicoBase "
                    + " WHERE categoria = ? "
@@ -43,7 +33,7 @@ public class ServicoBaseDAO {
         }
     }
 
-    /** Passo 9: o serviço escolhido, ou null se o código não existir. */
+    /** Passo 9; null se não existir. */
     public ServicoBase buscarServico(int id) throws SQLException {
         String sql = "SELECT idServicoBase, descricao, categoria, observacoesTecnicas FROM TB_ServicoBase "
                    + " WHERE idServicoBase = ?";

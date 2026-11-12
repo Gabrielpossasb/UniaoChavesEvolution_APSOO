@@ -1,14 +1,6 @@
 package uniaoevolutions.negocio;
 
-/**
- * Cliente da União Evolutions.
- *
- * Diagrama de Classes v2 (2ª iteração): nome, cpfCnpj, telefone e o
- * construtor <<create>> Cliente(nome, telefone), usado no FA-02.
- *
- * idCliente não consta do Diagrama de Classes, mas é a PK de TB_Cliente no
- * Mapeamento OR - é o identificador do objeto no banco.
- */
+/** Cliente (Diagrama de Classes v2). idCliente é a PK de TB_Cliente (MOR). */
 public class Cliente {
 
     private int idCliente;
@@ -19,13 +11,13 @@ public class Cliente {
     public Cliente() {
     }
 
-    /** <<create>> do Diagrama de Classes v2 - cadastro rápido do FA-02.3. */
+    /** <<create>> (FA-02.3). */
     public Cliente(String nome, String telefone) {
         this.nome = nome;
         this.telefone = telefone;
     }
 
-    /** Usado pela 1ª iteração (OrcamentoDAO) para montar o cliente lido do banco. */
+    /** Para a OrcamentoDAO montar o cliente lido. */
     public Cliente(int idCliente, String nome, String telefone) {
         this.idCliente = idCliente;
         this.nome = nome;
@@ -48,7 +40,7 @@ public class Cliente {
         this.nome = nome;
     }
 
-    /** Só dígitos: 11 para CPF, 14 para CNPJ. Pode ser null (FA-02). */
+    /** Só dígitos (11 ou 14); null no FA-02. */
     public String getCpfCnpj() {
         return cpfCnpj;
     }

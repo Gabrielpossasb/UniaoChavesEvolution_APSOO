@@ -1,12 +1,6 @@
 package uniaoevolutions.negocio;
 
-/**
- * Serviço ou peça do catálogo da empresa.
- *
- * Não está no Diagrama de Classes (desenhado só para este caso de uso), mas
- * está no Mapeamento OR como TB_ServicoBase, referenciada por
- * TB_ItemOrcamento. É dela que vem a descrição da coluna "Serviço / Peça".
- */
+/** Serviço ou peça do catálogo (TB_ServicoBase no MOR). */
 public class ServicoBase {
 
     private int idServicoBase;

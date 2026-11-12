@@ -6,14 +6,8 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
 /**
- * Ponto de entrada do caso de uso Solicitar Orçamento (2ª iteração). Não faz
- * parte da modelagem.
- *
- * O MainRegistrarOrdemServico (1ª iteração) continua abrindo o Registrar Ordem de Serviço.
- *
- * Não há caso de uso de autenticação: o usuário logado (PRE-01) é informado
- * no primeiro argumento, como o idUsuario de TB_Usuario. Sem argumento, é o
- * usuário 1 (Gabriel Abraão - Técnico de Módulos, o do mockup).
+ * Entrada do Solicitar Orçamento (fora da modelagem). Argumento: idUsuario do usuário
+ * logado (PRE-01); padrão 1.
  *     java ... uniaoevolutions.MainSolicitarOrcamento 3   -> Jamily Sales, Técnico de Chaves
  */
 public class MainSolicitarOrcamento {
@@ -30,7 +24,7 @@ public class MainSolicitarOrcamento {
         try {
             UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
         } catch (Exception ignorado) {
-            // Sem o look and feel, usa o padrão do Swing.
+            // Sem ele, fica o padrão do Swing.
         }
         int usuario = idUsuarioLogado;
         SwingUtilities.invokeLater(() -> new TelaSolicitarOrcamento(usuario).setVisible(true));

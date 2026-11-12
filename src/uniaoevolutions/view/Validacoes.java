@@ -8,18 +8,9 @@ import java.util.Calendar;
 import java.util.Date;
 
 /**
- * Validação e conversão do FORMATO dos campos digitados na
- * TelaSolicitarOrcamento: CPF/CNPJ (com dígitos verificadores), data no
- * formato brasileiro, valor monetário brasileiro, telefone, placa, ano e
- * chassi.
- *
- * Não faz parte da modelagem: é apoio da camada de interface, como o
- * Segmento é apoio da camada de negócio. As REGRAS de negócio (RN-01, RN-03,
- * RN-04, RN-05, RN-07) continuam na ControladoraSolicitarOrcamento - a tela
- * só garante que o que ela entrega à controladora está bem formado.
- *
- * Todo método validarX devolve null quando o valor é válido, ou a mensagem
- * de erro a exibir.
+ * Validação e conversão de formato dos campos das telas (CPF/CNPJ, data, valor,
+ * telefone, placa, ano, chassi). Apoio da interface, fora da modelagem; as regras
+ * de negócio ficam nas controladoras. validarX devolve null ou a mensagem de erro.
  */
 public final class Validacoes {
 
@@ -44,7 +35,7 @@ public final class Validacoes {
     // CPF e CNPJ
     // =================================================================
 
-    /** CPF: 11 dígitos, não todos iguais, e os dois dígitos verificadores corretos. */
+    /** CPF: 11 dígitos, não todos iguais, verificadores corretos. */
     public static boolean cpfValido(String texto) {
         String d = somenteDigitos(texto);
         if (d.length() != 11 || todosIguais(d)) {
@@ -63,7 +54,7 @@ public final class Validacoes {
         return true;
     }
 
-    /** CNPJ: 14 dígitos, não todos iguais, e os dois dígitos verificadores corretos. */
+    /** CNPJ: 14 dígitos, não todos iguais, verificadores corretos. */
     public static boolean cnpjValido(String texto) {
         String d = somenteDigitos(texto);
         if (d.length() != 14 || todosIguais(d)) {
@@ -104,12 +95,7 @@ public final class Validacoes {
     // Campo "Cliente": nome, CPF/CNPJ ou telefone
     // =================================================================
 
-    /**
-     * O campo de busca aceita nome, CPF/CNPJ ou telefone (texto do mockup).
-     * Só dígitos e pontuação de documento -> CPF (11) ou CNPJ (14), com os
-     * verificadores; com parênteses, espaço ou "+" -> telefone; com letras ->
-     * nome.
-     */
+    /** Busca do cliente: dígitos = CPF/CNPJ; parênteses, espaço ou "+" = telefone; letras = nome. */
     public static String validarBuscaCliente(String texto) {
         String t = texto == null ? "" : texto.trim();
         if (t.isEmpty()) {
@@ -118,7 +104,7 @@ public final class Validacoes {
         if (t.matches("[0-9./\\-]+")) {
             String d = somenteDigitos(t);
             if (d.length() == 11) {
-                // 11 dígitos: CPF; se o CPF não fecha mas é um celular válido, é telefone.
+                // 11 dígitos: CPF ou, se o CPF não fecha, celular.
                 if (cpfValido(d) || (t.matches("\\d{11}") && validarTelefone(t) == null)) {
                     return null;
                 }
@@ -128,7 +114,7 @@ public final class Validacoes {
                 return cnpjValido(d) ? null : MSG_CNPJ_INVALIDO;
             }
             if (d.length() == 10) {
-                return validarTelefone(t);   // fixo sem formatação: 6733217788
+                return validarTelefone(t);   // fixo sem pontuação
             }
             return MSG_BUSCA_INVALIDA;
         }
@@ -142,10 +128,7 @@ public final class Validacoes {
     // Telefone
     // =================================================================
 
-    /**
-     * Telefone brasileiro: DDD (11 a 99) + 8 dígitos (fixo) ou 9 dígitos
-     * começando por 9 (celular / WhatsApp). Aceita com ou sem a pontuação.
-     */
+    /** DDD + 8 dígitos (fixo) ou 9 começando por 9 (celular); com ou sem pontuação. */
     public static String validarTelefone(String texto) {
         String t = texto == null ? "" : texto.trim();
         if (t.isEmpty()) {
@@ -183,11 +166,7 @@ public final class Validacoes {
     // Data no formato brasileiro
     // =================================================================
 
-    /**
-     * dd/mm/aaaa, com dia e mês de um ou dois dígitos e ano de quatro, e que
-     * exista no calendário (31/02 é recusado). Também aceita a data digitada
-     * sem barras, com 8 dígitos (ddmmaaaa). Devolve null se inválida.
-     */
+    /** dd/mm/aaaa (ou ddmmaaaa) de uma data que existe; null se inválida. */
     public static Date converterData(String texto) {
         String t = texto == null ? "" : texto.trim();
         if (t.matches("\\d{8}")) {   // ACRÉSCIMO (rodada 6): data sem barras
@@ -213,11 +192,7 @@ public final class Validacoes {
     // Valor monetário no formato brasileiro
     // =================================================================
 
-    /**
-     * "150", "150,5", "150,50", "1.234,56" ou "R$ 1.234,56". Ponto só como
-     * separador de milhar; vírgula como decimal, com até dois dígitos.
-     * Negativo e texto inválido devolvem null.
-     */
+    /** "150", "150,5", "1.234,56" ou "R$ 1.234,56"; null se inválido ou negativo. */
     public static Double converterValor(String texto) {
         String t = texto == null ? "" : texto.trim();
         if (t.startsWith("R$")) {
@@ -251,7 +226,7 @@ public final class Validacoes {
         return t.matches("[A-Z]{3}-?\\d[A-Z0-9]\\d{2}") ? null : MSG_PLACA_INVALIDA;
     }
 
-    /** "qaf7c21" -> "QAF-7C21". Só deve ser chamado com placa válida. */
+    /** "qaf7c21" -> "QAF-7C21" (placa já validada). */
     public static String normalizarPlaca(String texto) {
         String t = texto.trim().toUpperCase().replace("-", "");
         return t.substring(0, 3) + "-" + t.substring(3);
@@ -285,7 +260,7 @@ public final class Validacoes {
     // Genéricos
     // =================================================================
 
-    /** Obrigatório e com no máximo 255 caracteres (tamanho das colunas). */
+    /** Obrigatório; até 255 caracteres. */
     public static String validarObrigatorio(String texto) {
         if (texto == null || texto.trim().isEmpty()) {
             return MSG_OBRIGATORIO;
@@ -293,14 +268,14 @@ public final class Validacoes {
         return validarTamanho(texto);
     }
 
-    /** Opcional, mas com no máximo 255 caracteres. */
+    /** Opcional; até 255 caracteres. */
     public static String validarTamanho(String texto) {
         return texto != null && texto.trim().length() > TAMANHO_MAXIMO_TEXTO
                 ? "Máximo de " + TAMANHO_MAXIMO_TEXTO + " caracteres."
                 : null;
     }
 
-    /** Quantidade de cópias: inteiro maior que zero. Devolve null se inválida. */
+    /** Inteiro > 0; null se inválido. */
     public static Integer converterQuantidade(String texto) {
         String t = texto == null ? "" : texto.trim();
         if (!t.matches("\\d{1,3}")) {

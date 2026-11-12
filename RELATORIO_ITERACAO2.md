@@ -149,27 +149,27 @@ de linha da versão entregue.
 
 | Mensagem | Código | Ctrl, linha |
 |---|---|---|
-| (pré-condições do contrato: RN-01, RN-04, RN-07) | `verificarPreCondicoes(dataValidade)` | 493 |
-| 1 `registrarOrcamento(dataValidade, observacoes)` | método | 492 |
-| 1.1 `tec = buscarUsuario(idUsuarioLogado)` | `usuarioDAO.buscarUsuario(idUsuarioLogado)` | 496 |
-| 1.2 `numero = gerarNumeroOrcamento()` | `orcamentoDAO.gerarNumeroOrcamento()` | 499 |
-| 1.3 `[seg="Modulos"] <<create>> OrcamentoModulos(…)` | `new OrcamentoModulos(numero, dataValidade, origemAtendimento, observacoes, sintomaRelatado, diagnosticoPendenteBancada)` | 505 |
-| 1.4 `[seg="Chaves"] <<create>> OrcamentoChaves(…)` | `new OrcamentoChaves(…10 parâmetros…)` | 511 |
-| 1.5 `[identificacaoIlegivel] setModuloIlegivel(…)` | `((OrcamentoModulos) orc).setModuloIlegivel(…)` | 518 |
-| 1.6 `[perdaTotal] setComprovacaoPropriedade(…)` | `((OrcamentoChaves) orc).setComprovacaoPropriedade(…)` | 524 |
-| 1.7 `[seg="Modulos"] mod = buscarModulo(vei, identificacaoModulo)` | `moduloECUDAO.buscarModulo(vei, identificacaoModulo)` | 530 |
-| 1.8 `[mod == null] <<create>> ModuloECU(…)` | `new ModuloECU(tipoModulo, modeloECU, identificacaoModulo)` | 535 |
-| 1.9 `[mod criado] associarModulo(mod)` → vei | `vei.associarModulo(mod)` | 539 |
-| 1.10 `[seg="Modulos"] associarModulo(mod)` → orc | `((OrcamentoModulos) orc).associarModulo(mod)` | 545 |
-| 1.11 `[para cada item] adicionarItem(item)` | `orc.adicionarItem(item)` | 550 |
-| 1.12 `associarCliente(cli)` | `orc.associarCliente(cli)` | 554 |
-| 1.13 `associarVeiculo(vei)` | `orc.associarVeiculo(vei)` | 557 |
-| 1.14 `associarTecnico(tec)` | `orc.associarTecnico(tec)` | 560 |
-| 1.15 `sinalizarRegistro()` | `orc.sinalizarRegistro()` | 564 |
+| (pré-condições do contrato: RN-01, RN-04, RN-07) | `verificarPreCondicoes(dataValidade)` | 406 |
+| 1 `registrarOrcamento(dataValidade, observacoes)` | método | 405 |
+| 1.1 `tec = buscarUsuario(idUsuarioLogado)` | `usuarioDAO.buscarUsuario(idUsuarioLogado)` | 409 |
+| 1.2 `numero = gerarNumeroOrcamento()` | `orcamentoDAO.gerarNumeroOrcamento()` | 412 |
+| 1.3 `[seg="Modulos"] <<create>> OrcamentoModulos(…)` | `new OrcamentoModulos(numero, dataValidade, origemAtendimento, observacoes, sintomaRelatado, diagnosticoPendenteBancada)` | 418 |
+| 1.4 `[seg="Chaves"] <<create>> OrcamentoChaves(…)` | `new OrcamentoChaves(…10 parâmetros…)` | 424 |
+| 1.5 `[identificacaoIlegivel] setModuloIlegivel(…)` | `((OrcamentoModulos) orc).setModuloIlegivel(…)` | 431 |
+| 1.6 `[perdaTotal] setComprovacaoPropriedade(…)` | `((OrcamentoChaves) orc).setComprovacaoPropriedade(…)` | 437 |
+| 1.7 `[seg="Modulos"] mod = buscarModulo(vei, identificacaoModulo)` | `moduloECUDAO.buscarModulo(vei, identificacaoModulo)` | 443 |
+| 1.8 `[mod == null] <<create>> ModuloECU(…)` | `new ModuloECU(tipoModulo, modeloECU, identificacaoModulo)` | 448 |
+| 1.9 `[mod criado] associarModulo(mod)` → vei | `vei.associarModulo(mod)` | 452 |
+| 1.10 `[seg="Modulos"] associarModulo(mod)` → orc | `((OrcamentoModulos) orc).associarModulo(mod)` | 458 |
+| 1.11 `[para cada item] adicionarItem(item)` | `orc.adicionarItem(item)` | 463 |
+| 1.12 `associarCliente(cli)` | `orc.associarCliente(cli)` | 467 |
+| 1.13 `associarVeiculo(vei)` | `orc.associarVeiculo(vei)` | 470 |
+| 1.14 `associarTecnico(tec)` | `orc.associarTecnico(tec)` | 473 |
+| 1.15 `sinalizarRegistro()` | `orc.sinalizarRegistro()` | 477 |
 | 1.15.1 `setDataSolicitacao(dataAtual)` | `negocio/Orcamento.java` | 116 |
 | 1.15.2 `setStatus("Em análise")` | `negocio/Orcamento.java` | 117 |
 | 1.15.3 `calcularValorEstimado()` | `negocio/Orcamento.java` | 118 |
-| (pós-condição "orc foi persistido") | `orcamentoDAO.salvar(orc)` | 568 |
+| (pós-condição "orc foi persistido") | `orcamentoDAO.salvar(orc)` | 480 |
 
 A ordem 1.1 → 1.2 → 1.7 → salvar é verificada em tempo de execução por
 `TesteControladoras.ordemDasMensagens` (DAOs espiãs).
@@ -178,30 +178,30 @@ A ordem 1.1 → 1.2 → 1.7 → salvar é verificada em tempo de execução por
 
 | Mensagem do DSS | Operação | Ctrl | Tela (chamada) |
 |---|---|---|---|
-| Normal 1 | `iniciarOrcamento(): Orcamento` | 180 | 1046 |
-| Normal 3 / Alt. 2 | `informarCliente(origemAtendimento, cpfCnpjCliente): Cliente` | 211 | 1085 |
-| Alt. 4 (FA-02) | `cadastrarCliente(nome, telefone): Cliente` | 253 | 2193 |
-| Normal 5 | `selecionarVeiculo(placa): Veiculo` | 268 | 1334 |
-| Alt. 6 (FA-04) | `cadastrarVeiculo(placa, marca, modelo, anoModelo, motorizacao, numeroChassi): Veiculo` | 286 | 2273 |
-| Normal 7 | `informarSegmento(segmento): List<ServicoBase>` | 311 | 1453, 1725 |
-| Normal 9 (V1) | `informarDadosModulo(tipoModulo, modeloECU, identificacaoModulo, sintomaRelatado): List<Orcamento>` | 332 | 1520 |
-| Variantes 2 (FAV-8.1) | `informarIdentificacaoIlegivel(tipoModulo, sintomaRelatado)` | 352 | 1510 |
-| Variantes 4 (FAV-8.1) | `informarDescricaoModulo(registroFotografico, descricaoFisicaPlaca): List<Orcamento>` | 367 | 1513 |
-| Variantes 6 (FAV-8.2) | `informarDiagnosticoPendente()` | 379 | 1526, 1583 |
-| Normal 11 / Var. 13, 15 (V2, FAV-8.4B) | `informarDadosChaves(…6 parâmetros…): String` | 392 | 1640 |
-| Variantes 9 (FAV-8.4A) | `informarComprovacaoPropriedade(documentoPropriedade, nomeSolicitante, documentoSolicitante): ServicoBase` | 420 | 1695 |
-| Normal 13 / Alt. 8 / Var. 11 | `incluirItem(idServicoBase, valorProposto): double` | 441 | 1767 |
-| Alt. 10 (FA-11A) | `removerItem(idItem): double` | 465 | 1819 |
-| Alt. 12 (FA-11B) | `alterarValorItem(idItem, novoValorProposto): double` | 475 | 1856 |
-| Normal 15 / Alt. 14 | `registrarOrcamento(dataValidade, observacoes): Orcamento` | 492 | 1897 |
-| Alt. 16 (FA-12D) | `salvarRascunhoOrcamento(observacoes)` | 581 | 2061 |
-| Alt. 18 (FA-00) | `solicitarConfirmacaoDesistencia(): String` | 648 | 2088 |
-| Alt. 20 (FA-00) | `descartarOrcamento(): List<Orcamento>` | 656 | 2094 (e 2070, FA-12D) |
-| Alt. 21 `continuarEditando()` | Técnico → Interface, sem mensagem ao Sistema | — | 2091 |
-| (acréscimo) "listaVeiculos" de Normal 3 | `consultarVeiculosVinculados()` | 671 | 1308 |
-| (acréscimo) lista de clientes da busca do mockup | `consultarClientes(trecho)` | 683 | 1205 |
-| (acréscimo) módulos já registrados do veículo | `consultarModulosDoVeiculo()` | 692 | 1246 |
-| (acréscimo) "historicoTecnico" de Normal 5 | `consultarHistoricoTecnico()` | 706 | 1369 |
+| Normal 1 | `iniciarOrcamento(): Orcamento` | 154 | 1023 |
+| Normal 3 / Alt. 2 | `informarCliente(origemAtendimento, cpfCnpjCliente): Cliente` | 179 | 1062 |
+| Alt. 4 (FA-02) | `cadastrarCliente(nome, telefone): Cliente` | 218 | 2138 |
+| Normal 5 | `selecionarVeiculo(placa): Veiculo` | 230 | 1305 |
+| Alt. 6 (FA-04) | `cadastrarVeiculo(placa, marca, modelo, anoModelo, motorizacao, numeroChassi): Veiculo` | 243 | 2218 |
+| Normal 7 | `informarSegmento(segmento): List<ServicoBase>` | 263 | 1422, 1682 |
+| Normal 9 (V1) | `informarDadosModulo(tipoModulo, modeloECU, identificacaoModulo, sintomaRelatado): List<Orcamento>` | 280 | 1486 |
+| Variantes 2 (FAV-8.1) | `informarIdentificacaoIlegivel(tipoModulo, sintomaRelatado)` | 297 | 1476 |
+| Variantes 4 (FAV-8.1) | `informarDescricaoModulo(registroFotografico, descricaoFisicaPlaca): List<Orcamento>` | 307 | 1479 |
+| Variantes 6 (FAV-8.2) | `informarDiagnosticoPendente()` | 316 | 1492, 1548 |
+| Normal 11 / Var. 13, 15 (V2, FAV-8.4B) | `informarDadosChaves(…6 parâmetros…): String` | 325 | 1603 |
+| Variantes 9 (FAV-8.4A) | `informarComprovacaoPropriedade(documentoPropriedade, nomeSolicitante, documentoSolicitante): ServicoBase` | 348 | 1656 |
+| Normal 13 / Alt. 8 / Var. 11 | `incluirItem(idServicoBase, valorProposto): double` | 365 | 1724 |
+| Alt. 10 (FA-11A) | `removerItem(idItem): double` | 386 | 1776 |
+| Alt. 12 (FA-11B) | `alterarValorItem(idItem, novoValorProposto): double` | 392 | 1813 |
+| Normal 15 / Alt. 14 | `registrarOrcamento(dataValidade, observacoes): Orcamento` | 405 | 1851 |
+| Alt. 16 (FA-12D) | `salvarRascunhoOrcamento(observacoes)` | 489 | 2011 |
+| Alt. 18 (FA-00) | `solicitarConfirmacaoDesistencia(): String` | 553 | 2034 |
+| Alt. 20 (FA-00) | `descartarOrcamento(): List<Orcamento>` | 558 | 2040 (e 2020, FA-12D) |
+| Alt. 21 `continuarEditando()` | Técnico → Interface, sem mensagem ao Sistema | - | 2037 |
+| (acréscimo) "listaVeiculos" de Normal 3 | `consultarVeiculosVinculados()` | 568 | 1279 |
+| (acréscimo) lista de clientes da busca do mockup | `consultarClientes(trecho)` | 576 | 1182 |
+| (acréscimo) módulos já registrados do veículo | `consultarModulosDoVeiculo()` | 581 | 1220 |
+| (acréscimo) "historicoTecnico" de Normal 5 | `consultarHistoricoTecnico()` | 589 | 1340 |
 
 ### 4.3 Diagrama de comunicação da 1ª iteração: `registrarOrdemServico`
 
@@ -211,17 +211,17 @@ pasta está desatualizado (ainda chama a operação de `abrirOS`). Arquivo:
 
 | Mensagem do diagrama | Código | Linha |
 |---|---|---|
-| 1.1 `orc = buscarOrcamento(orcamentoSelecionado)` | `orcamentoDAO.buscarOrcamento(orcamentoSelecionado)` | 129 |
-| 1.2 `vei = buscarVeiculo(orc)` (`:VeiculoDAO`) | `orc.getVeiculo()`, do diagrama de classes (ver 7.15) | 140 |
-| 1.3 `tec = buscarTecnico(tecnicoSelecionado)` (`:TecnicoDAO`) | `usuarioDAO.buscarUsuario(tecnicoSelecionado)` (ver 7.15) | 143 |
-| 1.4 `seg = getSegmentoPretendido()` | `orc.getSegmentoPretendido()` | 149 |
-| 1.5 `[seg="Modulos"] <<create>> OrdemDeServicoModulos(…)` / 1.6 `[seg="Chaves"] <<create>> OrdemDeServicoChaves(…)` | `criarOrdemDeServico(…)`, com o ramo de Módulos primeiro | 153 |
-| 1.7 `sinalizarAbertura()` → 1.7.1 `setDataAbertura()`, 1.7.2 `setStatusOs("Aberta")` | `os.sinalizarAbertura()` | 157 |
-| 1.8 `associaOS(os)` → orc | `os.associarOrcamento(orc)` (ver 7.15) | 160 |
-| 1.9 `associaOS(os)` → vei | `os.associarVeiculo(vei)` | 163 |
-| 1.10 `associaOS(os)` → tec | `os.associarTecnico(tec)` | 166 |
-| (RN-03, RN-04: não é mensagem do diagrama) | `os.validar()` | 171 |
-| 1.11 `salvar(os)` | `ordemServicoDAO.salvar(os)` | 177 |
+| 1.1 `orc = buscarOrcamento(orcamentoSelecionado)` | `orcamentoDAO.buscarOrcamento(orcamentoSelecionado)` | 120 |
+| 1.2 `vei = buscarVeiculo(orc)` (`:VeiculoDAO`) | `orc.getVeiculo()`, do diagrama de classes (ver 7.15) | 131 |
+| 1.3 `tec = buscarTecnico(tecnicoSelecionado)` (`:TecnicoDAO`) | `usuarioDAO.buscarUsuario(tecnicoSelecionado)` (ver 7.15) | 134 |
+| 1.4 `seg = getSegmentoPretendido()` | `orc.getSegmentoPretendido()` | 140 |
+| 1.5 `[seg="Modulos"] <<create>> OrdemDeServicoModulos(…)` / 1.6 `[seg="Chaves"] <<create>> OrdemDeServicoChaves(…)` | `criarOrdemDeServico(…)`, com o ramo de Módulos primeiro | 144 |
+| 1.7 `sinalizarAbertura()` → 1.7.1 `setDataAbertura()`, 1.7.2 `setStatusOs("Aberta")` | `os.sinalizarAbertura()` | 148 |
+| 1.8 `associaOS(os)` → orc | `os.associarOrcamento(orc)` (ver 7.15) | 151 |
+| 1.9 `associaOS(os)` → vei | `os.associarVeiculo(vei)` | 154 |
+| 1.10 `associaOS(os)` → tec | `os.associarTecnico(tec)` | 157 |
+| (RN-03, RN-04: não é mensagem do diagrama) | `os.validar()` | 160 |
+| 1.11 `salvar(os)` | `ordemServicoDAO.salvar(os)` | 166 |
 
 ---
 
@@ -308,7 +308,7 @@ escrita por mim.
 | D17 | Rascunho exige cliente, veículo e segmento (FKs e tabela da subclasse do MOR); não consome número; a listagem do FA-12D usa `descartarOrcamento()`, que encerra a sessão | Gravar rascunho sem cliente: o MOR não permite |
 | D18 | Depois de registrar ou salvar rascunho, o formulário reabre para um novo orçamento. Desistir (FA-00) fecha a tela, porque o FA-00.5 encerra o caso de uso. O "X" da janela não faz nada: o único jeito de sair é "Voltar / Desistir" (rodada 8; antes o "X" pedia a confirmação do FA-00 e desistir reabria o formulário) | Fechar a aplicação em todos os casos |
 | D19 | Look and feel Metal (multiplataforma) só na tela nova, para as cores e bordas do mockup saírem iguais em Windows e Linux. A 1ª iteração continua com o do sistema | System LAF: no Windows ignora fundos e bordas customizados de botões |
-| D20 | Os selos "PASSOS 1 · 12", "V1 · PASSOS 7.1-8.3"… e os cabeçalhos "Tela 2 — …" do mockup **não** aparecem: são anotações do documento, não elementos da tela | Desenhá-los na interface |
+| D20 | Os selos "PASSOS 1 · 12", "V1 · PASSOS 7.1-8.3"… e os cabeçalhos "Tela 2: …" do mockup **não** aparecem: são anotações do documento, não elementos da tela | Desenhá-los na interface |
 | D21 | Listas das combos (tipos de módulo, modelos de ECU, tipos de chave, situações do imobilizador, marcas) inventadas como sugestão; as combos são **editáveis** e aceitam qualquer texto | Listas fechadas ou catálogo novo |
 | D22 | Registro fotográfico guarda o caminho do arquivo (`String`, como no diagrama); o arquivo não é copiado | Copiar ou embutir a imagem no banco |
 | D23 | Valor proposto: ao perder o foco, a obrigatoriedade só é cobrada se há serviço escolhido (o campo é de inclusão, não do orçamento) | Cobrar sempre: daria erro a quem só passa pelo campo |
@@ -528,12 +528,12 @@ verificado por script, para não depender de leitura visual:
 | Diagrama | O que foi conferido | Como | Resultado | Correção |
 |---|---|---|---|---|
 | Classes v2: 21 classes, inclusive as da 1ª iteração | existência de cada classe; nome, tipo e visibilidade (+/-) de cada atributo; nome, nomes **e** tipos dos parâmetros, retorno e visibilidade de cada operação | script que lê as declarações Java e compara com a especificação transcrita do diagrama (imagem + strings do `.asta`) | **2 divergências**: (1) a classe `InformacoesSegurancaVeiculo` não existia; (2) `OrdemDeServico.associarOrcamento(ocr)` com parâmetro `ocr`, o diagrama diz `orc` | (1) classe criada com os 4 atributos e a associação "Veiculo 1 possui 0..1", preenchida pela `OrcamentoDAO` a partir de `TB_InformacoesSegurancaVeiculo` (os campos antigos que a tela do Registrar OS lê continuam preenchidos); (2) parâmetro renomeado. Depois: **0 divergências** de assinatura e **0** de ordem |
-| Classes v2: associações e multiplicidades | 1, 0..1, 0..* e 1..* no código (referência única × lista; obrigatório × opcional) e no banco (`NOT NULL`, `UNIQUE`, FK) | leitura | conforme (ItemOrcamento 1..* é garantido pela RN-01 na controladora, já que o banco não expressa "ao menos um") | — |
-| Mapeamento OR v2 | cada tabela e coluna, PK, FK, UNIQUE e ordem das colunas | script que lê o `.docx` e os `CREATE TABLE` do `schema.sql` | 13 tabelas conformes; diferenças só nos dois `[ACRESCIMO]` da 1ª iteração (`TB_ItemOrcamento.quantidade`, `TB_OrdemDeServico.numeroOS`), já registrados (7.14) | — |
+| Classes v2: associações e multiplicidades | 1, 0..1, 0..* e 1..* no código (referência única × lista; obrigatório × opcional) e no banco (`NOT NULL`, `UNIQUE`, FK) | leitura | conforme (ItemOrcamento 1..* é garantido pela RN-01 na controladora, já que o banco não expressa "ao menos um") | - |
+| Mapeamento OR v2 | cada tabela e coluna, PK, FK, UNIQUE e ordem das colunas | script que lê o `.docx` e os `CREATE TABLE` do `schema.sql` | 13 tabelas conformes; diferenças só nos dois `[ACRESCIMO]` da 1ª iteração (`TB_ItemOrcamento.quantidade`, `TB_OrdemDeServico.numeroOS`), já registrados (7.14) | - |
 | Casos de uso | atores do "1 Solicitar Orçamento" | imagem do `Casos de uso 01 Atualizado PDF.pdf` + strings do `.asta` | **divergência**: o código aceitava o Administrador, que não é ator deste caso de uso (D16) | `iniciarOrcamento` aceita só Técnico de Módulos e Técnico de Chaves |
-| Comunicação (1ª e 2ª iteração) | ordem e guardas | marcadores `// 1.x` + DAOs espiãs (rodada 2) | conforme | — |
-| DSS da 2ª iteração | ordem das mensagens em todos os fluxos | controladora espiã (rodada 2) | conforme | — |
-| DSS da 1ª iteração | ordem das mensagens da `TelaRegistrarOrdemServico` | leitura das imagens corrigidas × chamadas da tela | conforme: 1 → 2 → 4 → 5 → 7 → 10; FA-11B 6 → 8; FA-11C 10; FA-00 12 → 14. Retornos diferem do diagrama de classes (7.18) | — |
+| Comunicação (1ª e 2ª iteração) | ordem e guardas | marcadores `// 1.x` + DAOs espiãs (rodada 2) | conforme | - |
+| DSS da 2ª iteração | ordem das mensagens em todos os fluxos | controladora espiã (rodada 2) | conforme | - |
+| DSS da 1ª iteração | ordem das mensagens da `TelaRegistrarOrdemServico` | leitura das imagens corrigidas × chamadas da tela | conforme: 1 → 2 → 4 → 5 → 7 → 10; FA-11B 6 → 8; FA-11C 10; FA-00 12 → 14. Retornos diferem do diagrama de classes (7.18) | - |
 
 **Testes:** a bateria sem interface ganhou a verificação de que o Administrador é recusado. Total:
 158 verificações de interface e 66 sem interface, sem falhas. Os números de linha das tabelas 4.1,
@@ -638,7 +638,7 @@ veículo.
 | Onde | Antes | Depois |
 |---|---|---|
 | `ControladoraSolicitarOrcamento.consultarHistoricoTecnico()` (acréscimo) | `List<String>` com as OS do veículo | `List<Orcamento>` com os orçamentos do veículo, exceto rascunhos (mesmo critério do `buscarAtendimentosModulo`), do mais recente ao mais antigo. Usa a `listarOrcamentos()` do diagrama, sem método novo na DAO |
-| `ControladoraSolicitarOrcamento.consultarOrdensDeServicoDoVeiculo()` | — | ACRÉSCIMO: as OS do veículo, pela mesma consulta da 1ª iteração |
+| `ControladoraSolicitarOrcamento.consultarOrdensDeServicoDoVeiculo()` | - | ACRÉSCIMO: as OS do veículo, pela mesma consulta da 1ª iteração |
 | Janela "Histórico técnico" | lista de OS num único `JLabel` HTML | dois blocos: "Orçamentos do veículo" (cada linha com o mesmo texto do bloco do módulo, mais o segmento e o módulo, ex.: "· Módulos MM-88214-C") e "Ordens de Serviço do veículo". Um `JLabel` por linha, sem HTML, para o tamanho calculado ser o desenhado e nada sair cortado |
 | Botão "Ver N atendimentos anteriores" | N = número de OS (3 no QAF-7C21) | N = número de orçamentos (5 no QAF-7C21) |
 | Bloco do módulo | texto montado à parte | usa a mesma `linhaAtendimento` da janela, então as linhas são idênticas |
@@ -773,8 +773,8 @@ estilo, verifique o mockup e aplique o estilo nos botoes."*
 | Imprimir OS | branco, borda e texto azuis, ícone de impressora | botão padrão do sistema, sem ícone | igual ao mockup, com ícone desenhado (`IconeImpressora`) |
 | Voltar / Cancelar | branco, borda cinza-clara, texto escuro em negrito | botão padrão do sistema | igual ao mockup |
 | Ver atendimentos anteriores | azul-claro, borda azul-clara, texto azul em negrito | botão padrão do sistema | igual ao mockup |
-| Salvar rascunho (não está no mockup) | — | botão padrão do sistema | como o Voltar / Cancelar |
-| Incluir item (não está no mockup) | — | botão padrão do sistema | "+ Incluir item", como o Imprimir OS |
+| Salvar rascunho (não está no mockup) | - | botão padrão do sistema | como o Voltar / Cancelar |
+| Incluir item (não está no mockup) | - | botão padrão do sistema | "+ Incluir item", como o Imprimir OS |
 
 Todos têm cantos arredondados, cursor de mão, cor um pouco mais escura ao passar o mouse e ao
 pressionar, e aparência apagada quando desabilitados (FA-02). Os botões são desenhados pela classe
@@ -788,4 +788,41 @@ estavam. Auditorias: 0 divergências. `DOCUMENTACAO.md` atualizado e 33 links de
 **Visto de passagem, sem mudança:** o mockup mostra "Ver 3 atendimentos anteriores", com a contagem,
 e a tela mostra "Ver atendimentos anteriores". No segmento Chaves, o bloco de dados técnicos tem
 espaço vazio porque o `CardLayout` reserva a altura do bloco de Módulos.
+
+### 10.12 Rodada 12 (11/11/2026): comentários mais objetivos e sem travessão
+
+**Pedido:** *"reduzir os comentarios para a forma mais objetiva, e que nao tem o travessao [...] em
+nenhum lugar."*
+
+**Comentários:** os de todos os `.java` de `src/` e do `schema.sql` foram reescritos de forma curta.
+Ficou o que identifica a origem (classe do diagrama, mensagem 1.x, passo, FA, RN, `ACRÉSCIMO`,
+`[ACRESCIMO]`) e saiu a explicação longa. Foram mantidos sem mudança:
+- os marcadores `// 1.1` a `// 1.15.3` de `registrarOrcamento` e `// 1.1` a `// 1.11` de
+  `registrarOrdemServico`;
+- o comentário `DSS 21`, que o `atualizar_linhas.py` usa como âncora.
+
+Três comentários do `schema.sql` que começavam no meio da frase (orçamentos de 2025, itens do
+ORC-2026-0231 e OS de 2025) foram completados. O comentário do `MenuPrincipal` que falava em fechar
+pelo "X" foi corrigido.
+
+**Travessão longo:** removido de todo o projeto: código, `schema.sql`, `README.md`, `DOCUMENTACAO.md`,
+`RASTREABILIDADE.md` e este relatório. Nos textos, cada um virou dois-pontos, vírgula, ponto e vírgula
+ou parênteses, conforme a frase; nas tabelas, a célula vazia virou "-". Na tela do Solicitar
+Orçamento:
+- o texto da perda total ficou "Perda total das chaves (o cliente não possui nenhuma chave funcional
+  do veículo)";
+- o número vazio da lista de orçamentos ficou "-".
+
+O travessão curto (–) dos dados do mockup ("ECU – Injeção Eletrônica", "Gabriel Abraão – Técnico de
+Módulos") foi mantido: é dado, não pontuação.
+
+**Links:** com os comentários menores, as linhas mudaram.
+- Os 181 links de linha do `RASTREABILIDADE.md` foram remapeados pelo conteúdo.
+- Os que citavam um método e já estavam desatualizados passaram a apontar para a declaração dele.
+- As citações de comentários no documento foram atualizadas para o texto novo.
+- Tabelas 4.1-4.3 recalculadas.
+
+**Verificação:** compila; auditorias com 0 divergências; `TesteControladoras` (69 verificações, que
+recriam o banco a partir do `schema.sql`) e os cenários de interface `variantesChavesComCadastros` e
+`desistencia` sem falhas.
 

@@ -2,18 +2,7 @@ package uniaoevolutions.negocio;
 
 import java.util.Date;
 
-/**
- * Orçamento do segmento Programação / Confecção de Chaves - variante V2 do
- * Solicitar Orçamento.
- *
- * Diagrama de Classes v2: tipoChave, quantidadeCopias, possuiTelecomando,
- * codigoTransponder, situacaoImobilizador, perdaTotal, documentoPropriedade,
- * nomeSolicitante, documentoSolicitante; <<create>> OrcamentoChaves(numero,
- * dataValidade, origemAtendimento, observacoes, tipoChave, quantidadeCopias,
- * possuiTelecomando, codigoTransponder, situacaoImobilizador, perdaTotal)
- * (mensagem 1.4) e setComprovacaoPropriedade(documentoPropriedade,
- * nomeSolicitante, documentoSolicitante) (mensagem 1.6).
- */
+/** Orçamento do segmento Chaves (V2). Mensagens 1.4 e 1.6. */
 public class OrcamentoChaves extends Orcamento {
 
     private String tipoChave;
@@ -43,10 +32,7 @@ public class OrcamentoChaves extends Orcamento {
         this.perdaTotal = perdaTotal;
     }
 
-    /**
-     * Mensagem 1.6: [perdaTotal] setComprovacaoPropriedade(...) - FAV-8.4A:
-     * na perda total, documento do veículo e identificação do solicitante.
-     */
+    /** Mensagem 1.6 (FAV-8.4A): documento do veículo e solicitante. */
     public void setComprovacaoPropriedade(String documentoPropriedade, String nomeSolicitante,
                                           String documentoSolicitante) {
         this.documentoPropriedade = documentoPropriedade;
@@ -54,7 +40,7 @@ public class OrcamentoChaves extends Orcamento {
         this.documentoSolicitante = documentoSolicitante;
     }
 
-    /** Polimorfismo: o segmento é o da subclasse (RN-03). */
+    /** RN-03: segmento da subclasse. */
     @Override
     public String getSegmentoPretendido() {
         return Segmento.CHAVES;

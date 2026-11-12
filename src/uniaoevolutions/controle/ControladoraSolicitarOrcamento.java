@@ -29,19 +29,11 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * Classe <<control>> ControladoraSolicitarOrcamento do Diagrama de Classes v2
- * e objeto ":Sistema" do DSS e do Diagrama de Comunicação do caso de uso
- * Solicitar Orçamento (RF-5, 2ª iteração).
- *
- * Os seis atributos (cli, vei, tec, origemAtendimento, segmento, itens) e as
- * dezenove operações públicas são os do diagrama, com os mesmos nomes,
- * parâmetros e tipos de retorno. Cada operação corresponde a uma mensagem do
- * DSS Interface -> Sistema; registrarOrcamento é a mensagem 1 do Diagrama de
- * Comunicação, com as mensagens 1.1 a 1.15.3 na ordem do diagrama.
- *
- * Sem SQL e sem JOptionPane: regra violada sobe como IllegalArgumentException
- * (FA-09A, FA-09B, FA-12A, FA-12B, FA-12C) e falha de banco como SQLException
- * (FA-13), como na ControladoraRegistrarOS.
+ * <<control>> do Diagrama de Classes v2 e ":Sistema" do DSS e do Diagrama de
+ * Comunicação do Solicitar Orçamento (RF-5). Atributos e operações públicas são os
+ * do diagrama; cada operação é uma mensagem do DSS. registrarOrcamento segue as
+ * mensagens 1.1 a 1.15.3.
+ * Regra violada: IllegalArgumentException. Falha de banco: SQLException (FA-13).
  */
 public class ControladoraSolicitarOrcamento {
 
@@ -53,18 +45,14 @@ public class ControladoraSolicitarOrcamento {
     public static final String ORIGEM_PRESENCIAL = "Presencial";
     public static final String ORIGEM_REMOTO = "Remoto";
 
-    /**
-     * FAV-8.4B: número máximo de chaves suportado pelo imobilizador. Nenhum
-     * artefato modela esse dado; o valor 4 é o do mockup ("Máximo do
-     * imobilizador: 4.").
-     */
+    /** FAV-8.4B: máximo de chaves do imobilizador (valor do mockup; não está no modelo). */
     public static final int QUANTIDADE_MAXIMA_CHAVES = 4;
 
     /** FAV-8.4A.4: procedimento acrescentado na perda total das chaves. */
     public static final String SERVICO_APAGAMENTO =
             "Apagamento e regravação de todas as chaves do imobilizador";
 
-    // Mensagens com o texto da Descrição Expandida (pontuação do mockup).
+    // Textos da Descrição Expandida (pontuação do mockup).
     public static final String MSG_VALOR_INVALIDO =
             "Informe um valor proposto válido para o serviço selecionado.";          // FA-09A
     public static final String MSG_FORA_DO_SEGMENTO =
@@ -80,11 +68,11 @@ public class ControladoraSolicitarOrcamento {
     public static final String MSG_LIMITE_CHAVES =
             "Limite de chaves do imobilizador atingido. Máximo permitido: "
             + QUANTIDADE_MAXIMA_CHAVES + ".";                                        // FAV-8.4B
-    /** Passo 8.5 (V2): retorno de informarDadosChaves, com o texto do mockup. */
+    /** Passo 8.5 (V2): retorno de informarDadosChaves (texto do mockup). */
     public static final String MSG_COMPROVACAO_PROPRIEDADE =
             "Comprovação de propriedade obrigatória para serviços de chaves. Em caso de perda total, "
             + "informe o documento do veículo e a identificação de quem está solicitando.";
-    /** FA-00.2: retorno de solicitarConfirmacaoDesistencia, com o texto do mockup. */
+    /** FA-00.2: retorno de solicitarConfirmacaoDesistencia (texto do mockup). */
     public static final String MSG_CONFIRMAR_DESISTENCIA = "Desistir deste orçamento?";
 
     // =================================================================
@@ -99,14 +87,8 @@ public class ControladoraSolicitarOrcamento {
     private List<ItemOrcamento> itens = new ArrayList<>();
 
     // =================================================================
-    // ACRÉSCIMO: dados da sessão de registro
-    //
-    // O Contrato de Operação diz que as mensagens anteriores a
-    // registrarOrcamento "guardam, na sessão de registro, os dados que o
-    // Técnico vai informando". O diagrama só lista seis atributos; os dados
-    // técnicos de informarDadosModulo / informarDadosChaves e das variantes
-    // precisam de onde ficar até registrarOrcamento usá-los nas mensagens
-    // 1.3 a 1.10. Ficam aqui, privados.
+    // ACRÉSCIMO: dados da sessão de registro (Contrato de Operação), usados
+    // nas mensagens 1.3 a 1.10. O diagrama só lista seis atributos.
     // =================================================================
 
     private final int idUsuarioLogado;
@@ -133,27 +115,23 @@ public class ControladoraSolicitarOrcamento {
     private String nomeSolicitante;
     private String documentoSolicitante;
 
-    // DAOs das dependências do Diagrama de Classes v2.
+    // DAOs (dependências do Diagrama de Classes v2).
     private final UsuarioDAO usuarioDAO;
     private final OrcamentoDAO orcamentoDAO;
     private final ClienteDAO clienteDAO;
     private final VeiculoDAO veiculoDAO;
     private final ServicoBaseDAO servicoBaseDAO;
     private final ModuloECUDAO moduloECUDAO;
-    /** ACRÉSCIMO: histórico técnico do veículo (passo 5) - ver consultarHistoricoTecnico. */
+    /** ACRÉSCIMO: consultas do histórico técnico (passo 5). */
     private final OrdemServicoDAO ordemServicoDAO;
 
-    /**
-     * @param idUsuarioLogado o "idUsuarioLogado" da mensagem 1.1. Não há caso
-     *                        de uso de autenticação; quem abre a tela informa
-     *                        o usuário (PRE-01).
-     */
+    /** @param idUsuarioLogado o da mensagem 1.1 (sem caso de uso de autenticação; PRE-01). */
     public ControladoraSolicitarOrcamento(int idUsuarioLogado) {
         this(idUsuarioLogado, new UsuarioDAO(), new OrcamentoDAO(), new ClienteDAO(), new VeiculoDAO(),
              new ServicoBaseDAO(), new ModuloECUDAO(), new OrdemServicoDAO());
     }
 
-    /** Usado pelos testes, para observar a ordem das chamadas às DAOs. */
+    /** Para os testes observarem a ordem das chamadas às DAOs. */
     ControladoraSolicitarOrcamento(int idUsuarioLogado, UsuarioDAO usuarioDAO, OrcamentoDAO orcamentoDAO,
                                    ClienteDAO clienteDAO, VeiculoDAO veiculoDAO,
                                    ServicoBaseDAO servicoBaseDAO, ModuloECUDAO moduloECUDAO,
@@ -172,11 +150,7 @@ public class ControladoraSolicitarOrcamento {
     // DSS - fluxo normal
     // =================================================================
 
-    /**
-     * DSS 1: numeroOrc, dataSolicitacao = iniciarOrcamento() : Orcamento.
-     * Passo 1 (RN-08): o formulário abre com o número provisório e a data.
-     * PRE-01: o usuário logado é Técnico de Módulos ou de Chaves.
-     */
+    /** DSS 1. Passo 1 (RN-08): número provisório e data. PRE-01: só técnicos. */
     public Orcamento iniciarOrcamento() throws SQLException {
         limparSessao();
 
@@ -184,9 +158,7 @@ public class ControladoraSolicitarOrcamento {
         if (usuario == null) {
             throw new IllegalArgumentException("Usuário logado não encontrado.");
         }
-        // PRE-01 e diagrama de casos de uso: só o Técnico de Módulos e o
-        // Técnico de Chaves estão ligados ao "Solicitar Orçamento"; o
-        // Administrador não (e não há generalização dele para os técnicos).
+        // PRE-01 e casos de uso: o Administrador não é ator deste caso de uso.
         if (usuario.getTipoUsuario() != TipoUsuario.tecnicoDeModulos
                 && usuario.getTipoUsuario() != TipoUsuario.tecnicoDeChaves) {
             throw new IllegalArgumentException(
@@ -201,12 +173,8 @@ public class ControladoraSolicitarOrcamento {
     }
 
     /**
-     * DSS 3: dadosCli = informarCliente(origemAtendimento, cpfCnpjCliente) : Cliente.
-     * Passos 2 e 3. Devolve null quando o cliente não tem cadastro (FA-02).
-     *
-     * O mockup pede "Busque por nome, CPF/CNPJ ou telefone": se o texto tem
-     * 11 ou 14 dígitos e só caracteres de CPF/CNPJ, busca por CPF/CNPJ; senão,
-     * por nome ou telefone.
+     * DSS 3. Passos 2 e 3; null se o cliente não tem cadastro (FA-02).
+     * Busca por CPF/CNPJ (11 ou 14 dígitos) ou, senão, por nome ou telefone (mockup).
      */
     public Cliente informarCliente(String origemAtendimento, String cpfCnpjCliente) throws SQLException {
         if (!ORIGEM_PRESENCIAL.equals(origemAtendimento) && !ORIGEM_REMOTO.equals(origemAtendimento)) {
@@ -224,7 +192,7 @@ public class ControladoraSolicitarOrcamento {
                 && (digitos.length() == 11 || digitos.length() == 14);
         if (pareceDocumento) {
             encontrado = clienteDAO.buscarPorCpfCnpj(digitos);
-            // 11 dígitos sem pontuação também podem ser um celular: (67) 99180-4402.
+            // 11 dígitos também podem ser celular.
             if (encontrado == null && digitos.length() == 11) {
                 List<Cliente> porTelefone = clienteDAO.buscarPorNomeOuTelefone(termo);
                 encontrado = porTelefone.size() == 1 ? porTelefone.get(0) : null;
@@ -238,7 +206,7 @@ public class ControladoraSolicitarOrcamento {
             encontrado = clientes.isEmpty() ? null : clientes.get(0);
         }
 
-        // Outro cliente: o veículo escolhido antes deixa de valer (RN-02).
+        // Outro cliente: descarta o veículo (RN-02).
         if (encontrado == null || cli == null || encontrado.getIdCliente() != cli.getIdCliente()) {
             this.vei = null;
         }
@@ -246,10 +214,7 @@ public class ControladoraSolicitarOrcamento {
         return encontrado;
     }
 
-    /**
-     * DSS alternativo 4: dadosCli = cadastrarCliente(nome, telefone) : Cliente.
-     * FA-02.3 e FA-02.4: o cliente é cadastrado sem veículos vinculados.
-     */
+    /** DSS alternativo 4. FA-02.3-4: cliente cadastrado sem veículos. */
     public Cliente cadastrarCliente(String nome, String telefone) throws SQLException {
         if (nome == null || nome.isBlank() || telefone == null || telefone.isBlank()) {
             throw new IllegalArgumentException("Informe o nome e o telefone do cliente.");
@@ -261,12 +226,9 @@ public class ControladoraSolicitarOrcamento {
         return novo;
     }
 
-    /**
-     * DSS 5: dadosVeic = selecionarVeiculo(placa) : Veiculo.
-     * Passos 4 e 5. Devolve null quando a placa não tem cadastro (FA-04).
-     */
+    /** DSS 5. Passos 4 e 5; null se a placa não tem cadastro (FA-04). */
     public Veiculo selecionarVeiculo(String placa) throws SQLException {
-        // DSS: selecionarVeiculo (5) vem depois de informarCliente (3).
+        // DSS: 5 depois de 3.
         if (cli == null) {
             throw new IllegalArgumentException("Identifique o cliente antes de selecionar o veículo.");
         }
@@ -277,12 +239,7 @@ public class ControladoraSolicitarOrcamento {
         return vei;
     }
 
-    /**
-     * DSS alternativo 6: dadosVeic = cadastrarVeiculo(placa, marca, modelo,
-     * anoModelo, motorizacao, numeroChassi) : Veiculo.
-     * FA-04.3 e FA-04.4: o veículo é cadastrado e passa a ser o veículo deste
-     * orçamento - é o orçamento que o vincula ao cliente (RN-02).
-     */
+    /** DSS alternativo 6. FA-04.3-4: cadastra o veículo; o orçamento o vincula ao cliente (RN-02). */
     public Veiculo cadastrarVeiculo(String placa, String marca, String modelo, int anoModelo,
                                     String motorizacao, String numeroChassi) throws SQLException {
         if (cli == null) {
@@ -302,17 +259,12 @@ public class ControladoraSolicitarOrcamento {
         return novo;
     }
 
-    /**
-     * DSS 7: listaServ = informarSegmento(segmento) : List.
-     * Passos 6 e 7 (RN-03): o segmento define o bloco técnico e os serviços
-     * base. Os dados técnicos informados antes são descartados: valem os que
-     * forem informados para este segmento.
-     */
+    /** DSS 7. Passos 6 e 7 (RN-03): devolve os serviços do segmento e zera os dados técnicos. */
     public List<ServicoBase> informarSegmento(String segmento) throws SQLException {
         if (!Segmento.MODULOS.equals(segmento) && !Segmento.CHAVES.equals(segmento)) {
             throw new IllegalArgumentException("Selecione o segmento pretendido.");
         }
-        // DSS: informarSegmento (7) vem depois de selecionarVeiculo (5).
+        // DSS: 7 depois de 5.
         if (vei == null) {
             throw new IllegalArgumentException("Selecione o veículo antes de informar o segmento.");
         }
@@ -324,11 +276,7 @@ public class ControladoraSolicitarOrcamento {
         return servicoBaseDAO.buscarPorCategoria(segmento);
     }
 
-    /**
-     * DSS 9: atendAnteriores = informarDadosModulo(tipoModulo, modeloECU,
-     * identificacaoModulo, sintomaRelatado) : List.
-     * Passos 8.1 e 8.2 (V1, RN-04).
-     */
+    /** DSS 9. Passos 8.1 e 8.2 (V1, RN-04). */
     public List<Orcamento> informarDadosModulo(String tipoModulo, String modeloECU,
                                                String identificacaoModulo, String sintomaRelatado)
             throws SQLException {
@@ -345,10 +293,7 @@ public class ControladoraSolicitarOrcamento {
         return orcamentoDAO.buscarAtendimentosModulo(mod);
     }
 
-    /**
-     * DSS variantes 2: informarIdentificacaoIlegivel(tipoModulo, sintomaRelatado).
-     * FAV-8.1.1 e FAV-8.1.2: modelo da ECU e identificação ficam dispensados.
-     */
+    /** DSS variantes 2. FAV-8.1.1-2: dispensa modelo da ECU e identificação. */
     public void informarIdentificacaoIlegivel(String tipoModulo, String sintomaRelatado) {
         exigirSegmento(Segmento.MODULOS);
         this.tipoModulo = vazioParaNulo(tipoModulo);
@@ -358,12 +303,7 @@ public class ControladoraSolicitarOrcamento {
         this.identificacaoIlegivel = true;
     }
 
-    /**
-     * DSS variantes 4: atendAnteriores = informarDescricaoModulo(
-     * registroFotografico, descricaoFisicaPlaca) : List.
-     * FAV-8.1.3 e FAV-8.1.4 (volta ao passo 8.2). Sem a identificação o
-     * módulo não pode ser reconhecido no histórico, então a lista é vazia.
-     */
+    /** DSS variantes 4. FAV-8.1.3-4: sem identificação, não há atendimentos a listar. */
     public List<Orcamento> informarDescricaoModulo(String registroFotografico, String descricaoFisicaPlaca)
             throws SQLException {
         exigirSegmento(Segmento.MODULOS);
@@ -372,22 +312,15 @@ public class ControladoraSolicitarOrcamento {
         return orcamentoDAO.buscarAtendimentosModulo(moduloECUDAO.buscarModulo(vei, identificacaoModulo));
     }
 
-    /**
-     * DSS variantes 6: informarDiagnosticoPendente().
-     * FAV-8.2: os valores propostos passam a ser estimativos (RN-05).
-     */
+    /** DSS variantes 6. FAV-8.2: valores passam a ser estimativos (RN-05). */
     public void informarDiagnosticoPendente() {
         exigirSegmento(Segmento.MODULOS);
         this.diagnosticoPendenteBancada = true;
     }
 
     /**
-     * DSS 11 / variantes 13 e 15: resultado = informarDadosChaves(tipoChave,
-     * quantidadeCopias, possuiTelecomando, codigoTransponder,
-     * situacaoImobilizador, perdaTotal) : String.
-     * Passos 8.4 e 8.5 (V2, RN-04). Devolve MSG_LIMITE_CHAVES quando a
-     * quantidade excede o imobilizador (FAV-8.4B) e, senão, a exigência de
-     * comprovação de propriedade (passo 8.5).
+     * DSS 11; variantes 13 e 15. Passos 8.4 e 8.5 (V2, RN-04).
+     * Devolve MSG_LIMITE_CHAVES (FAV-8.4B) ou a exigência de comprovação (8.5).
      */
     public String informarDadosChaves(String tipoChave, int quantidadeCopias, boolean possuiTelecomando,
                                       String codigoTransponder, String situacaoImobilizador,
@@ -411,12 +344,7 @@ public class ControladoraSolicitarOrcamento {
         return MSG_COMPROVACAO_PROPRIEDADE;
     }
 
-    /**
-     * DSS variantes 9: servicoAcrescentado = informarComprovacaoPropriedade(
-     * documentoPropriedade, nomeSolicitante, documentoSolicitante) : ServicoBase.
-     * FAV-8.4A.3 e FAV-8.4A.4: devolve o procedimento de apagamento e
-     * regravação, que a tela acrescenta à relação de serviços a orçar.
-     */
+    /** DSS variantes 9. FAV-8.4A.3-4: devolve o procedimento de apagamento e regravação. */
     public ServicoBase informarComprovacaoPropriedade(String documentoPropriedade, String nomeSolicitante,
                                                       String documentoSolicitante) throws SQLException {
         exigirSegmento(Segmento.CHAVES);
@@ -433,11 +361,7 @@ public class ControladoraSolicitarOrcamento {
                 + "\" não está cadastrado no catálogo de serviços base.");
     }
 
-    /**
-     * DSS 13: valorEstimado = incluirItem(idServicoBase, valorProposto) : double.
-     * Passos 9 e 10 (RN-05), com FA-09A (valor inválido) e FA-09B (serviço
-     * fora do segmento, RN-03).
-     */
+    /** DSS 13. Passos 9 e 10 (RN-05); FA-09A e FA-09B (RN-03). */
     public double incluirItem(int idServicoBase, double valorProposto) throws SQLException {
         if (segmento == null) {
             throw new IllegalArgumentException("Selecione o segmento pretendido.");
@@ -458,20 +382,13 @@ public class ControladoraSolicitarOrcamento {
         return somarItens();
     }
 
-    /**
-     * DSS alternativo 10: valorEstimado = removerItem(idItem) : double.
-     * FA-11A.3 e FA-11A.4: valor estimado recalculado (RN-05).
-     */
+    /** DSS alternativo 10. FA-11A.3-4 (RN-05). */
     public double removerItem(int idItem) {
         itens.remove(buscarItem(idItem));
         return somarItens();
     }
 
-    /**
-     * DSS alternativo 12: valorEstimado = alterarValorItem(idItem,
-     * novoValorProposto) : double.
-     * FA-11B: valor estimado recalculado (RN-05).
-     */
+    /** DSS alternativo 12. FA-11B (RN-05). */
     public double alterarValorItem(int idItem, double novoValorProposto) {
         ItemOrcamento item = buscarItem(idItem);
         if (!(novoValorProposto > 0)) {
@@ -482,12 +399,8 @@ public class ControladoraSolicitarOrcamento {
     }
 
     /**
-     * DSS 15: orc = registrarOrcamento(dataValidade, observacoes) : Orcamento.
-     * Mensagem 1 do Diagrama de Comunicação e operação do Contrato de
-     * Operação. As pré-condições do contrato (RN-01, RN-03, RN-04, RN-07) são
-     * conferidas antes da mensagem 1.1; depois, o corpo segue as mensagens
-     * 1.1 a 1.15.3 na ordem do diagrama, e por fim a pós-condição "o objeto
-     * orc foi persistido".
+     * DSS 15; mensagem 1 do Diagrama de Comunicação. Pré-condições do contrato,
+     * mensagens 1.1 a 1.15.3 na ordem do diagrama e a pós-condição (persistência).
      */
     public Orcamento registrarOrcamento(Date dataValidade, String observacoes) throws SQLException {
         verificarPreCondicoes(dataValidade);
@@ -563,28 +476,22 @@ public class ControladoraSolicitarOrcamento {
         //      1.15.2 setStatus("Em análise"), 1.15.3 calcularValorEstimado()
         orc.sinalizarRegistro();
 
-        // Contrato de Operação: "O objeto orc foi persistido". Se falhar, a
-        // SQLException sobe e a sessão continua intacta (FA-13.2).
+        // Pós-condição: orc persistido. Se falhar, a sessão continua (FA-13.2).
         orcamentoDAO.salvar(orc);
 
         return orc;
     }
 
     /**
-     * DSS alternativo 16: salvarRascunhoOrcamento(observacoes).
-     * FA-12D: grava "sem número definitivo e sem contagem do prazo de
-     * validade", na situação "Rascunho" (RN-06). A RN-01 e a RN-04 não são
-     * cobradas: o rascunho existe justamente porque o registro não pôde ser
-     * concluído. Cliente, veículo e segmento são exigidos porque o Mapeamento
-     * OR os torna obrigatórios (FKs e tabela da subclasse).
+     * DSS alternativo 16. FA-12D: grava como "Rascunho", sem número e sem validade (RN-06).
+     * Não cobra RN-01 e RN-04. Exige cliente, veículo e segmento (FKs do MOR).
      */
     public void salvarRascunhoOrcamento(String observacoes) throws SQLException {
         if (cli == null || vei == null || segmento == null) {
             throw new IllegalArgumentException(
                     "Para salvar o rascunho, identifique o cliente, o veículo e o segmento pretendido.");
         }
-        // Mesma sequência de registrarOrcamento (Diagrama de Comunicação), sem
-        // a 1.2 (rascunho não tem número) e com marcarComoRascunho no lugar da 1.15.
+        // Mesma sequência de registrarOrcamento, sem a 1.2 e com marcarComoRascunho no lugar da 1.15.
 
         // (1.1) tec = buscarUsuario(idUsuarioLogado)
         tec = usuarioDAO.buscarUsuario(idUsuarioLogado);
@@ -612,8 +519,7 @@ public class ControladoraSolicitarOrcamento {
                     documentoSolicitante);
         }
 
-        // (1.7 a 1.10) só se o tipo de módulo já foi informado: no rascunho a
-        // RN-04 ainda não é cobrada.
+        // (1.7 a 1.10) só se o tipo de módulo foi informado.
         if (Segmento.MODULOS.equals(segmento) && tipoModulo != null) {
             ModuloECU mod = moduloECUDAO.buscarModulo(vei, identificacaoModulo);
             boolean modCriado = false;
@@ -637,37 +543,28 @@ public class ControladoraSolicitarOrcamento {
         orc.associarVeiculo(vei);
         orc.associarTecnico(tec);
 
-        // FA-12D e RN-06: no lugar da 1.15, situação "Rascunho", sem número e
-        // sem prazo de validade.
+        // FA-12D e RN-06: no lugar da 1.15.
         orc.marcarComoRascunho(hoje());
 
         orcamentoDAO.salvarRascunho(orc);
     }
 
-    /** DSS alternativo 18: solicitarConfirmacaoDesistencia() - FA-00.2. */
+    /** DSS alternativo 18. FA-00.2. */
     public String solicitarConfirmacaoDesistencia() {
         return MSG_CONFIRMAR_DESISTENCIA;
     }
 
-    /**
-     * DSS alternativo 20: listaOrc = descartarOrcamento() : List.
-     * FA-00.3 e FA-00.4: nada é gravado; devolve a listagem de orçamentos.
-     */
+    /** DSS alternativo 20. FA-00.3-4: nada é gravado; devolve a listagem. */
     public List<Orcamento> descartarOrcamento() throws SQLException {
         limparSessao();
         return orcamentoDAO.listarOrcamentos();
     }
 
     // =================================================================
-    // ACRÉSCIMOS à modelagem: consultas cujo resultado o DSS mostra, mas
-    // que não cabem no tipo de retorno declarado (ver RELATORIO_ITERACAO2.md)
+    // ACRÉSCIMOS: consultas que o DSS mostra, mas fora do retorno declarado
     // =================================================================
 
-    /**
-     * DSS 3: "dadosCli(nome, telefone, listaVeiculos)". informarCliente
-     * devolve Cliente, que não tem veículos no Diagrama de Classes v2; a
-     * lista sai daqui.
-     */
+    /** DSS 3: a "listaVeiculos" de dadosCli (Cliente não tem veículos no diagrama). */
     public List<Veiculo> consultarVeiculosVinculados() throws SQLException {
         if (cli == null || cli.getIdCliente() == 0) {
             return new ArrayList<>();
@@ -675,33 +572,19 @@ public class ControladoraSolicitarOrcamento {
         return veiculoDAO.buscarPorCliente(cli);
     }
 
-    /**
-     * Lista de clientes cadastrados para o Técnico selecionar na busca do
-     * mockup ("Busque por nome, CPF/CNPJ ou telefone"). A identificação do
-     * escolhido continua sendo feita por informarCliente (DSS 3).
-     */
+    /** Clientes para a lista de busca do mockup; a identificação segue por informarCliente. */
     public List<Cliente> consultarClientes(String trecho) throws SQLException {
         return clienteDAO.buscarClientes(trecho);
     }
 
-    /**
-     * Módulos já registrados do veículo selecionado, para o Técnico
-     * selecionar no bloco V1. Os dados escolhidos seguem por
-     * informarDadosModulo (DSS 9).
-     */
+    /** Módulos já registrados do veículo (bloco V1); a escolha segue por informarDadosModulo. */
     public List<ModuloECU> consultarModulosDoVeiculo() throws SQLException {
         return moduloECUDAO.buscarModulosDoVeiculo(vei);
     }
 
     /**
-     * DSS 5: "dadosVeic(..., historicoTecnico)" e passo 5: os atendimentos
-     * anteriores do veículo, isto é, os orçamentos dele (rascunhos não são
-     * atendimentos), do mais recente ao mais antigo.
-     *
-     * Rodada 7: antes devolvia só as Ordens de Serviço, e por isso não batia
-     * com os "atendimentos anteriores do mesmo módulo registrados no histórico
-     * técnico do veículo" (passo 8.2), que são orçamentos. Agora os do módulo
-     * são um subconjunto destes. Usa a listarOrcamentos do diagrama.
+     * DSS 5 "historicoTecnico" e passo 5: orçamentos do veículo, sem rascunhos, do mais
+     * recente ao mais antigo (rodada 7). Contém os atendimentos do módulo (8.2).
      */
     public List<Orcamento> consultarHistoricoTecnico() throws SQLException {
         List<Orcamento> atendimentos = new ArrayList<>();
@@ -721,10 +604,7 @@ public class ControladoraSolicitarOrcamento {
         return atendimentos;
     }
 
-    /**
-     * ACRÉSCIMO (rodada 7): as Ordens de Serviço do veículo, exibidas junto do
-     * histórico técnico. Reaproveita a consulta da 1ª iteração na OrdemServicoDAO.
-     */
+    /** ACRÉSCIMO (rodada 7): OS do veículo para o histórico (consulta da 1ª iteração). */
     public List<String> consultarOrdensDeServicoDoVeiculo() throws SQLException {
         List<String> linhas = new ArrayList<>();
         if (vei == null || vei.getIdVeiculo() == 0) {
@@ -749,10 +629,7 @@ public class ControladoraSolicitarOrcamento {
     // Apoio
     // =================================================================
 
-    /**
-     * Pré-condições do Contrato de Operação de registrarOrcamento, na ordem
-     * dos fluxos alternativos do passo 12: FA-12A, FA-12B e FA-12C.
-     */
+    /** Pré-condições do contrato de registrarOrcamento: FA-12A, FA-12B e FA-12C. */
     private void verificarPreCondicoes(Date dataValidade) {
         if (itens.isEmpty()) {
             throw new IllegalArgumentException(MSG_SEM_ITENS);                       // FA-12A / RN-01
@@ -800,7 +677,7 @@ public class ControladoraSolicitarOrcamento {
             throw new IllegalArgumentException(texto.toString());
         }
 
-        // FA-12C / RN-07: a validade não pode ser anterior à data da solicitação.
+        // FA-12C / RN-07: validade >= data da solicitação.
         if (dataValidade == null || inicioDoDia(dataValidade).before(hoje())) {
             throw new IllegalArgumentException(MSG_VALIDADE_INVALIDA);
         }
@@ -827,7 +704,7 @@ public class ControladoraSolicitarOrcamento {
         throw new IllegalArgumentException("Item não encontrado no orçamento.");
     }
 
-    /** RN-05: somatório dos valores propostos dos itens da sessão. */
+    /** RN-05: soma dos valores propostos. */
     private double somarItens() {
         double total = 0;
         for (ItemOrcamento item : itens) {

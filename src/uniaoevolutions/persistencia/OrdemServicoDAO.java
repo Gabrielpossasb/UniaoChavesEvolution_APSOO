@@ -15,27 +15,21 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * DAO da hierarquia OrdemDeServico. É ONDE A HERANÇA VIRA TABELA: o
- * Mapeamento OR usa "uma tabela por classe", com a PK da subclasse servindo
- * também de FK para a tabela da superclasse.
+ * DAO da hierarquia OrdemDeServico. "Uma tabela por subclasse" (PK da subclasse = FK):
  *
  *     OrdemDeServico (abstrata)  -> TB_OrdemDeServico
- *       |_ OrdemDeServicoModulos -> TB_OrdemDeServicoModulos (PK = FK)
- *       |_ OrdemDeServicoChaves  -> TB_OrdemDeServicoChaves  (PK = FK)
+ *       |_ OrdemDeServicoModulos -> TB_OrdemDeServicoModulos
+ *       |_ OrdemDeServicoChaves  -> TB_OrdemDeServicoChaves
  *
- * Gravar uma OS é sempre dois INSERTs numa transação: a superclasse gera o id,
- * a subclasse reusa esse mesmo id.
+ * Gravar = dois INSERTs numa transação, com o mesmo id.
  */
 public class OrdemServicoDAO {
 
-    /**
-     * Mensagem 1.11: salvar(os). O objeto recebe de volta o id gerado pelo
-     * banco.
-     */
+    /** Mensagem 1.11; o objeto recebe o id gerado. */
     public void salvar(OrdemDeServico os) throws SQLException {
         Connection conexao = Conexao.conectar();
         try {
-            // As linhas da superclasse e da subclasse têm de nascer juntas.
+            // Superclasse e subclasse na mesma transação.
             conexao.setAutoCommit(false);
             try {
                 removerRascunhoDoOrcamento(conexao, os.getOrcamento().getIdOrcamento());
@@ -54,10 +48,7 @@ public class OrdemServicoDAO {
         }
     }
 
-    /**
-     * RN-07: próximo número OS-AAAA-NNNN, "com sequência reiniciada a cada
-     * ano". O reinício sai do LIKE, que só olha os números do ano corrente.
-     */
+    /** RN-07: próximo OS-AAAA-NNNN; a sequência reinicia a cada ano. */
     public String gerarNumeroOS() throws SQLException {
         int ano = Calendar.getInstance().get(Calendar.YEAR);
         String prefixo = String.format("OS-%d-", ano);
@@ -79,14 +70,7 @@ public class OrdemServicoDAO {
         }
     }
 
-    /**
-     * OS anteriores do mesmo veículo, da mais recente para a mais antiga.
-     * ACRÉSCIMO à modelagem, exigido pelo passo 8.2 da V1, pelo botão
-     * "Ver atendimentos anteriores" do mockup e pela POS-05.
-     *
-     * São objetos só de consulta: as associações (orçamento, veículo, técnico)
-     * ficam vazias, porque isto é só para exibir o histórico.
-     */
+    /** ACRÉSCIMO (passo 8.2, POS-05): OS do veículo, da mais recente à mais antiga (só para exibir). */
     public List<OrdemDeServico> buscarHistoricoTecnico(int idVeiculo) throws SQLException {
         String sql = "SELECT os.idOrdemDeServico, os.numeroOS, os.dataAbertura, os.statusOS, "
                    + "       os.quilometragem, m.diagnosticoInicial, c.servicoExecutado "
@@ -115,7 +99,7 @@ public class OrdemServicoDAO {
     // Métodos privados
     // -----------------------------------------------------------------
 
-    /** INSERT na superclasse. Devolve o id gerado pelo AUTO_INCREMENT. */
+    /** INSERT na superclasse; devolve o id gerado. */
     private int inserirSuperclasse(Connection conexao, OrdemDeServico os) throws SQLException {
         String sql = "INSERT INTO TB_OrdemDeServico "
                    + " (numeroOS, dataAbertura, statusOS, quilometragem, prazoEstimado, "
@@ -144,10 +128,7 @@ public class OrdemServicoDAO {
         }
     }
 
-    /**
-     * INSERT na subclasse, com o MESMO id da superclasse. O instanceof traduz
-     * o tipo do objeto na tabela em que a linha filha é gravada.
-     */
+    /** INSERT na tabela da subclasse, com o id da superclasse. */
     private void inserirSubclasse(Connection conexao, OrdemDeServico os, int id) throws SQLException {
         if (os instanceof OrdemDeServicoModulos) {
             OrdemDeServicoModulos osModulos = (OrdemDeServicoModulos) os;
@@ -174,13 +155,8 @@ public class OrdemServicoDAO {
     }
 
     /**
-     * Remove o rascunho (FA-11C) do orçamento, se houver.
-     *
-     * TB_OrdemDeServico.idOrcamento é UNIQUE (RN-02) e o FA-11C.3 permite
-     * retomar o registro, então o rascunho dá lugar à OS definitiva.
-     *
-     * Não fere a RN-06: a cláusula statusOS = 'Rascunho' garante que só o
-     * rascunho - que não é uma OS registrada - pode ser removido.
+     * Remove o rascunho do orçamento, se houver: idOrcamento é UNIQUE (RN-02) e o
+     * FA-11C.3 permite retomar. Só apaga statusOS = 'Rascunho' (RN-06).
      */
     private void removerRascunhoDoOrcamento(Connection conexao, int idOrcamento) throws SQLException {
         List<Integer> ids = new ArrayList<>();
@@ -196,7 +172,7 @@ public class OrdemServicoDAO {
             }
         }
 
-        // A linha da subclasse sai primeiro: ela aponta para a da superclasse.
+        // Subclasse primeiro (aponta para a superclasse).
         for (int id : ids) {
             executarExclusao(conexao, "DELETE FROM TB_OrdemDeServicoModulos WHERE idOrdemDeServico = ?", id);
             executarExclusao(conexao, "DELETE FROM TB_OrdemDeServicoChaves  WHERE idOrdemDeServico = ?", id);
@@ -211,10 +187,7 @@ public class OrdemServicoDAO {
         }
     }
 
-    /**
-     * Caminho inverso do inserirSubclasse(): escolhe a subclasse conforme o
-     * LEFT JOIN que trouxe linha.
-     */
+    /** Inverso de inserirSubclasse(): a subclasse vem do LEFT JOIN com linha. */
     private OrdemDeServico montarOrdemDeServico(ResultSet resultado) throws SQLException {
         OrdemDeServico os;
         if (resultado.getString("servicoExecutado") != null) {
@@ -233,7 +206,7 @@ public class OrdemServicoDAO {
         return os;
     }
 
-    /** Converte a java.util.Date do modelo na java.sql.Date do JDBC. */
+    /** java.util.Date para java.sql.Date. */
     private java.sql.Date paraDataSql(Date data) {
         return data == null ? null : new java.sql.Date(data.getTime());
     }

@@ -1,14 +1,14 @@
-# União Evolutions — Registrar Ordem de Serviço e Solicitar Orçamento
+# União Evolutions: Registrar Ordem de Serviço e Solicitar Orçamento
 
-Trabalho Prático de APSOO — UFMS 2026.2 — Grupo G5
+Trabalho Prático de APSOO, UFMS 2026.2, Grupo G5
 
 Sistema **Java desktop** (Swing + JDBC + MySQL), em **4 camadas** (interface, controladora, negócio e
 persistência) com **padrão DAO**. O projeto tem os casos de uso de duas iterações:
 
 | Iteração | Caso de uso | Tela | Controladora |
 |---|---|---|---|
-| 1ª | **RF-6 — Registrar Ordem de Serviço** | `TelaRegistrarOrdemServico` | `ControladoraRegistrarOS` |
-| 2ª | **RF-5 — Solicitar Orçamento** | `TelaSolicitarOrcamento` | `ControladoraSolicitarOrcamento` |
+| 1ª | **RF-6: Registrar Ordem de Serviço** | `TelaRegistrarOrdemServico` | `ControladoraRegistrarOS` |
+| 2ª | **RF-5: Solicitar Orçamento** | `TelaSolicitarOrcamento` | `ControladoraSolicitarOrcamento` |
 
 Documentação completa:
 
@@ -26,7 +26,7 @@ Documentação completa:
 |---|---|---|
 | **JDK** | 17 ou superior | compilar e executar |
 | **XAMPP** | 8.x | fornece o MySQL (banco) e o phpMyAdmin (para rodar o script SQL) |
-| **VS Code** + *Extension Pack for Java* | — | executar com um clique (opcional — ver 3.1) |
+| **VS Code** + *Extension Pack for Java* | - | executar com um clique (opcional; ver 3.1) |
 
 Já vêm no repositório: o driver JDBC (`lib/mysql-connector-j-8.4.0.jar`), o script do banco
 (`sql/schema.sql`) e a configuração do VS Code. **Não é preciso baixar mais nada nem ter internet**:
@@ -72,7 +72,7 @@ Não é preciso criar nem selecionar o banco antes, porque o script já começa 
 orçamentos**, dois deles com status `Aprovado pelo cliente`, que são os que o Registrar OS lista.
 
 **Usuário e senha:** o projeto já está no padrão do XAMPP, `root` com senha em branco. Se o seu `root`
-tiver senha, coloque-a em [Conexao.java:18](src/uniaoevolutions/persistencia/Conexao.java#L18), a única
+tiver senha, coloque-a em [Conexao.java:12](src/uniaoevolutions/persistencia/Conexao.java#L12), a única
 classe que conhece as credenciais do banco.
 
 **Reimporte se tiver o banco da 1ª iteração.** O schema da 2ª iteração segue o Mapeamento OR v2, e o
@@ -121,10 +121,10 @@ java -cp "bin:lib/mysql-connector-j-8.4.0.jar" uniaoevolutions.MenuPrincipal
 
    | Usuário | Abre o Solicitar Orçamento? |
    |---|---|
-   | Gabriel Abraão — Técnico de Módulos | sim (é o do mockup) |
-   | Eduardo José — Técnico de Módulos | sim |
-   | Jamily Sales — Técnico de Chaves | sim |
-   | Caetano Raimundo — Administrador | não: o Administrador não é ator deste caso de uso |
+   | Gabriel Abraão (Técnico de Módulos) | sim (é o do mockup) |
+   | Eduardo José (Técnico de Módulos) | sim |
+   | Jamily Sales (Técnico de Chaves) | sim |
+   | Caetano Raimundo (Administrador) | não: o Administrador não é ator deste caso de uso |
 
 2. Clique em **Solicitar Orçamento** ou em **Registrar Ordem de Serviço**. O menu some enquanto a tela
    está aberta e volta quando ela é fechada:
@@ -181,10 +181,7 @@ registrar-ordem-servico/
 │       ├── VeiculoDAO.java         buscarPorPlaca, salvar
 │       ├── ModuloECUDAO.java       buscarModulo
 │       └── ServicoBaseDAO.java     buscarPorCategoria, buscarServico
-├── test/
-│   ├── uniaoevolutions/            testes em Java puro (controladoras e tela do Solicitar Orçamento)
-│   └── auditoria/                  scripts Python que comparam o código com os diagramas
-├── docs/telas-iteracao2/           capturas das telas, geradas pelos testes
+├── docs/telas-iteracao2/           capturas das telas
 ├── sql/schema.sql                  cria o banco, as 13 tabelas e os dados de exemplo
 ├── lib/mysql-connector-j-8.4.0.jar driver JDBC do MySQL
 ├── bin/                            saída da compilação (gerada ao compilar; fora do git)
@@ -248,24 +245,7 @@ superclasse mais uma por subclasse, com a PK sendo também FK para a superclasse
 
 ---
 
-## 6. Testes
-
-Os testes são em Java puro, sem JUnit, e **recriam o banco** a cada execução. Rode dentro desta
-pasta, depois de compilar o `src` (3.2):
-
-```bash
-javac -encoding UTF-8 -d bin-test -cp "bin:lib/mysql-connector-j-8.4.0.jar" $(find test -name '*.java')
-java -cp "bin-test:bin:lib/mysql-connector-j-8.4.0.jar" uniaoevolutions.controle.TesteControladoras
-java -cp "bin-test:bin:lib/mysql-connector-j-8.4.0.jar" uniaoevolutions.view.TesteTelaSolicitarOrcamento
-```
-
-O cenário `falhaDeGravacao` desliga e religa o MariaDB com `sudo service mariadb stop/start`, por isso
-só funciona em Linux com o MariaDB do sistema. Para rodar só um cenário, passe o nome dele como
-argumento.
-
----
-
-## 7. Problemas comuns
+## 6. Problemas comuns
 
 | Sintoma | Causa e solução |
 |---|---|

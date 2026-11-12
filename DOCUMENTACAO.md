@@ -1,7 +1,7 @@
-# Registrar Ordem de Serviço — União Evolutions
+# Registrar Ordem de Serviço: União Evolutions
 
-Trabalho Prático de APSOO — UFMS 2026.2 — Grupo G5
-Implementação do caso de uso **RF-6 — Registrar Ordem de Serviço** em Java desktop, **4 camadas**
+Trabalho Prático de APSOO, UFMS 2026.2, Grupo G5
+Implementação do caso de uso **RF-6: Registrar Ordem de Serviço** em Java desktop, **4 camadas**
 (interface, controladora, negócio e persistência), **padrão DAO**, **API JDBC** e **MySQL**.
 
 Este documento explica o que foi implementado, **de qual artefato da modelagem veio cada decisão** e
@@ -16,10 +16,10 @@ documento do grupo. Quando dois documentos discordam, a divergência está regis
 
 | Artefato | O que ele determinou nesta implementação |
 |---|---|
-| `Design/Diagrama de Classes.corrigido_.docx` (01/10/2026) — **versão vigente** | As 9 classes de domínio, seus atributos e operações; as 3 DAOs; a classe `<<control>> ControladoraRegistrarOS` e a `<<boundary>> TelaRegistrarOrdemServico`. É a **fonte principal**. |
-| `Design/Mapeamento_Objeto_Relacional.corrigido.docx` (01/10/2026) — **versão vigente** | O `sql/schema.sql` inteiro: nomes das tabelas, das colunas, chaves primárias, estrangeiras e `UNIQUE`. Em especial, a estratégia de mapeamento da herança. |
+| `Design/Diagrama de Classes.corrigido_.docx` (01/10/2026): **versão vigente** | As 9 classes de domínio, seus atributos e operações; as 3 DAOs; a classe `<<control>> ControladoraRegistrarOS` e a `<<boundary>> TelaRegistrarOrdemServico`. É a **fonte principal**. |
+| `Design/Mapeamento_Objeto_Relacional.corrigido.docx` (01/10/2026): **versão vigente** | O `sql/schema.sql` inteiro: nomes das tabelas, das colunas, chaves primárias, estrangeiras e `UNIQUE`. Em especial, a estratégia de mapeamento da herança. |
 | `Design/CORRIGIDO-registrarOrdemServico-Diagrama_de_Comunicacao.pdf` | A **ordem exata** das 11 mensagens dentro de `ControladoraRegistrarOS.registrarOrdemServico(...)`. Os números 1.1 a 1.11 estão nos comentários do método. |
-| `Analise/Contrato_Operacao_Registrar_Ordem_de_Servico.docx` | A assinatura da operação, suas pré-condições e as 14 pós-condições — que viraram o corpo do `registrarOrdemServico` e os `validar()` do domínio. |
+| `Analise/Contrato_Operacao_Registrar_Ordem_de_Servico.docx` | A assinatura da operação, suas pré-condições e as 14 pós-condições, que viraram o corpo do `registrarOrdemServico` e os `validar()` do domínio. |
 | `Requisitos/Descricao_Expandida_Registrar_Ordem_de_Servico.docx` | Os 12 passos do fluxo principal, as 7 regras de negócio (RN-01 a RN-07), os fluxos alternativos (FA-00, FA-02, FA-09, FA-11A, FA-11B, FA-11C, FA-12), as variantes V1 e V2 e o **texto literal das mensagens** exibidas ao usuário. |
 | `Requisitos/MOCKUP-registrar-ordem-de-servico.pdf` | O layout da `TelaRegistrarOrdemServico`: as 5 seções, os rótulos dos campos, a tabela de itens, o valor total e os botões. Também os dados de exemplo do `schema.sql`. |
 | `Requisitos/Documento Requisitos União Evolutions 3.0.docx` | RNF-4 (opera só na rede local, sem nuvem) → MySQL local; RNF-7 (desktop multiplataforma) → Java + Swing. |
@@ -96,7 +96,7 @@ graph TD
 ```
 
 **Por que a camada controladora existe?** Sem ela, a tela teria de chamar as três DAOs, saber a ordem
-certa das operações e conhecer as regras do caso de uso — ou seja, a regra de negócio ficaria dentro
+certa das operações e conhecer as regras do caso de uso, ou seja, a regra de negócio ficaria dentro
 do botão Salvar. Com ela:
 
 1. A tela conhece **uma** classe só. Se o caso de uso mudar de ordem, a tela não muda.
@@ -104,7 +104,7 @@ do botão Salvar. Com ela:
    Comunicação escrito em Java, linha por linha.
 3. Dá para trocar a tela (web, por exemplo) reaproveitando a controladora inteira.
 
-A controladora é literalmente o objeto **`:Sistema`** do Diagrama de Comunicação — aquele que recebe a
+A controladora é literalmente o objeto **`:Sistema`** do Diagrama de Comunicação, aquele que recebe a
 mensagem 1 e dispara todas as outras.
 
 ### 2.1 Os arquivos do projeto
@@ -117,8 +117,8 @@ registrar-ordem-servico/
 │   ├── controle/ControladoraRegistrarOS.java    CONTROLADORA   <<control>>
 │   ├── negocio/                                 NEGÓCIO
 │   │   ├── OrdemDeServico.java                      (ABSTRATA) superclasse
-│   │   ├── OrdemDeServicoModulos.java               subclasse — variante V1
-│   │   ├── OrdemDeServicoChaves.java                subclasse — variante V2
+│   │   ├── OrdemDeServicoModulos.java               subclasse: variante V1
+│   │   ├── OrdemDeServicoChaves.java                subclasse: variante V2
 │   │   ├── Orcamento.java   ItemOrcamento.java   ServicoBase.java
 │   │   ├── Cliente.java     Veiculo.java         Usuario.java
 │   │   └── TipoUsuario.java Segmento.java
@@ -143,7 +143,7 @@ Este documento se organiza pelas **decisões de implementação**; o
 ordem do PDF `artefatos elaborados na primeira iteração`. Quem vem da modelagem e quer achar o código
 começa por lá.
 
-São **18 arquivos-fonte**, e a pasta de cada um já diz a que camada ele pertence — a organização em
+São **18 arquivos-fonte**, e a pasta de cada um já diz a que camada ele pertence: a organização em
 pacotes é a própria arquitetura em camadas.
 
 ---
@@ -152,12 +152,12 @@ pacotes é a própria arquitetura em camadas.
 
 A ordem foi de baixo para cima: banco → negócio → persistência → controladora → tela.
 
-### Passo 1 — O banco (`sql/schema.sql`)
+### Passo 1: O banco (`sql/schema.sql`)
 
 Tradução literal do Mapeamento Objeto-Relacional. Cada `CREATE TABLE` tem, em comentário, a linha do
 artefato que lhe deu origem. São 10 tabelas; a estratégia de mapeamento está detalhada na seção 4.
 
-### Passo 2 — A camada de negócio (`negocio/`)
+### Passo 2: A camada de negócio (`negocio/`)
 
 As classes guardam os dados e as regras. O ponto mais importante é a **herança**:
 
@@ -211,12 +211,12 @@ private void setStatusOS(String status)  { ... }
 ```
 
 Os dois `set` são **privados** exatamente como o Diagrama de Classes os marca. Quem está de fora pede
-"sinalize a abertura" e a própria OS decide o que isso significa — assim não existe como gravar uma
+"sinalize a abertura" e a própria OS decide o que isso significa, assim não existe como gravar uma
 data de abertura sem o status correspondente.
 
-### Passo 3 — A camada de persistência (`persistencia/`)
+### Passo 3: A camada de persistência (`persistencia/`)
 
-Uma DAO por entidade, todas com `PreparedStatement` (nunca SQL concatenado — ver seção 9) e todas
+Uma DAO por entidade, todas com `PreparedStatement` (nunca SQL concatenado; ver seção 9) e todas
 fechando a conexão no `finally`.
 
 `OrcamentoDAO.buscarOrcamento` mostra o mapeamento acontecendo: no banco o orçamento está espalhado
@@ -225,7 +225,7 @@ em cinco tabelas ligadas por chave estrangeira; o método devolve **um** objeto 
 
 `OrdemServicoDAO.salvar` é o caso mais interessante e está explicado na seção 4.
 
-### Passo 4 — A camada controladora (`controle/ControladoraRegistrarOS.java`)
+### Passo 4: A camada controladora (`controle/ControladoraRegistrarOS.java`)
 
 O método `registrarOrdemServico` é o Diagrama de Comunicação transcrito:
 
@@ -269,7 +269,7 @@ return new OrdemDeServicoModulos(quilometragem, prazoEstimado, observacoes,
         relatoInicial, condicaoRecebimento, diagnosticoInicial);
 ```
 
-### Passo 5 — A camada de interface (`view/TelaRegistrarOrdemServico.java`)
+### Passo 5: A camada de interface (`view/TelaRegistrarOrdemServico.java`)
 
 Um `JFrame` com as cinco seções do mockup, na mesma ordem e com os mesmos rótulos:
 
@@ -278,7 +278,7 @@ Um `JFrame` com as cinco seções do mockup, na mesma ordem e com os mesmos rót
 | Identificação da OS | Orçamento associado (combo), Nº da OS (automático), Data de abertura, Prazo estimado, Situação |
 | Cliente e Veículo | Cliente, Telefone/Whatsapp, Placa, Marca/Modelo, Ano, Quilometragem, botão de histórico técnico |
 | Segmento do Serviço | Os dois `JRadioButton` e o aviso amarelo, com o texto literal do mockup |
-| Dados Técnicos | `CardLayout` com o bloco de Módulos (V1) e o de Chaves (V2) — só um aparece |
+| Dados Técnicos | `CardLayout` com o bloco de Módulos (V1) e o de Chaves (V2): só um aparece |
 | Execução | Técnico responsável (combo), Observações internas, tabela de itens e Valor total da OS |
 
 Os botões do rodapé são os do mockup (**Voltar / Cancelar**, **Imprimir OS**, **Salvar Ordem de
@@ -330,17 +330,17 @@ Esta é a parte destacada em negrito no enunciado. São três situações difere
 | `TB_Veiculo` | `Veiculo` | classe simples → tabela (4.1) |
 | `TB_Usuario` | `Usuario` | classe simples → tabela; `tipoUsuario` virou `ENUM` |
 | `TB_ServicoBase` | `ServicoBase` | classe simples → tabela; está no Mapeamento OR, não no Diagrama de Classes |
-| `TB_Orcamento` | `Orcamento` | tabela + 2 chaves estrangeiras (`idCliente`, `idVeiculo`) — 4.2 |
-| `TB_ItemOrcamento` | `ItemOrcamento` | **composição** → chave primária composta `(idItemOrcamento, idOrcamento)` — 4.2 |
-| `TB_OrdemDeServico` | `OrdemDeServico` (abstrata) | tabela da **superclasse** — 4.3 |
-| `TB_OrdemDeServicoModulos` | `OrdemDeServicoModulos` | tabela da **subclasse** V1 — 4.3 |
-| `TB_OrdemDeServicoChaves` | `OrdemDeServicoChaves` | tabela da **subclasse** V2 — 4.3 |
-| `TB_Pagamento` | — | consta do Mapeamento OR; **não é usada** por este caso de uso, criada só para o banco ser fiel ao artefato |
+| `TB_Orcamento` | `Orcamento` | tabela + 2 chaves estrangeiras (`idCliente`, `idVeiculo`) (4.2) |
+| `TB_ItemOrcamento` | `ItemOrcamento` | **composição** → chave primária composta `(idItemOrcamento, idOrcamento)` (4.2) |
+| `TB_OrdemDeServico` | `OrdemDeServico` (abstrata) | tabela da **superclasse** (4.3) |
+| `TB_OrdemDeServicoModulos` | `OrdemDeServicoModulos` | tabela da **subclasse** V1 (4.3) |
+| `TB_OrdemDeServicoChaves` | `OrdemDeServicoChaves` | tabela da **subclasse** V2 (4.3) |
+| `TB_Pagamento` | - | consta do Mapeamento OR; **não é usada** por este caso de uso, criada só para o banco ser fiel ao artefato |
 
 Duas colunas tiveram de ser acrescentadas ao Mapeamento OR, marcadas com `[ACRESCIMO]` no
 `schema.sql` e justificadas na seção 7: `TB_ItemOrcamento.quantidade` (lacuna 7) e
-`TB_OrdemDeServico.numeroOS` (lacuna 6). A terceira lacuna de banco — a justificativa exigida pela
-RN-05 (lacuna 10) — **não** criou coluna nova: ela é gravada em
+`TB_OrdemDeServico.numeroOS` (lacuna 6). A terceira lacuna de banco: a justificativa exigida pela
+RN-05 (lacuna 10): **não** criou coluna nova: ela é gravada em
 `TB_ServicoBase.observacoesTecnicas`, que já existia.
 
 ### 4.1 Classe simples → tabela
@@ -360,7 +360,7 @@ A regra é: na associação 1 para muitos, a chave estrangeira fica no lado **mu
 
 A **composição** *"Orcamento 1 compoe 1..\* ItemOrcamento"* (losango cheio) é mais forte: o item não
 existe fora do seu orçamento. Por isso `TB_ItemOrcamento` tem a chave primária **composta**
-`(idItemOrcamento, idOrcamento)` — o item é identificado junto com o pai.
+`(idItemOrcamento, idOrcamento)`: o item é identificado junto com o pai.
 
 A RN-02 (*"cada Ordem de Serviço está associada a exatamente um orçamento"*) virou
 `idOrcamento<<FK>><<UNIQUE>>` em `TB_OrdemDeServico`: o `UNIQUE` é o que impede dois registros de OS
@@ -368,7 +368,7 @@ para o mesmo orçamento.
 
 ### 4.3 Herança → três tabelas (o caso mais importante)
 
-O problema: banco relacional não tem herança. Existem três estratégias conhecidas — uma tabela só para
+O problema: banco relacional não tem herança. Existem três estratégias conhecidas: uma tabela só para
 toda a hierarquia, uma tabela por subclasse, ou uma tabela por classe. **O Mapeamento OR do grupo
 escolheu a terceira**:
 
@@ -381,7 +381,7 @@ TB_OrdemDeServico(idOrdemDeServico<<PK>>, numeroOS, dataAbertura, statusOS, ...)
 ```
 
 A tabela da subclasse tem uma chave primária que é **ao mesmo tempo chave estrangeira** para a tabela
-da superclasse. Uma linha filha só existe se existir a linha pai, e as duas têm o mesmo id — é assim
+da superclasse. Uma linha filha só existe se existir a linha pai, e as duas têm o mesmo id: é assim
 que a herança OO vira relacional.
 
 **Consequência no código:** gravar uma OS é sempre **dois INSERTs**, numa transação
@@ -415,7 +415,7 @@ Na leitura, o caminho é o inverso: `buscarHistoricoTecnico` faz `LEFT JOIN` com
 filhas e monta a subclasse conforme qual delas trouxe linha.
 
 **Por que essa estratégia e não uma tabela só?** Com uma tabela única, as sete colunas de Módulos
-ficariam nulas em toda OS de Chaves, e vice-versa — o banco não conseguiria exigir
+ficariam nulas em toda OS de Chaves, e vice-versa: o banco não conseguiria exigir
 `relatoInicial NOT NULL`, e a tabela cresceria a cada novo segmento. A desvantagem é precisar de dois
 INSERTs e de um JOIN na leitura, que é o preço pago aqui.
 
@@ -461,7 +461,7 @@ INSERTs e de um JOIN na leitura, que é o preço pago aqui.
 | **POS-03** Itens copiados com total consolidado | `OrdemDeServico.getItens()` e `getValorTotal()` (ver nota na seção 7) |
 | **POS-04** Técnico formalmente alocado | `associarTecnico()` + coluna `idUsuario<<FK>>` |
 | **POS-05** Registro no histórico técnico do veículo | `OrdemServicoDAO.buscarHistoricoTecnico()` (botão "Ver atendimentos anteriores") |
-| **POS-06** Registro de auditoria | **Não implementado** — ver seção 7, lacuna 5 |
+| **POS-06** Registro de auditoria | **Não implementado**; ver seção 7, lacuna 5 |
 
 ### 5.4 Os fluxos alternativos
 
@@ -482,7 +482,7 @@ INSERTs e de um JOIN na leitura, que é o preço pago aqui.
 A escolha do segmento muda três coisas: o bloco de campos, os campos obrigatórios e a lista de
 técnicos.
 
-| | V1 — Módulos (ECU) | V2 — Chaves |
+| | V1: Módulos (ECU) | V2: Chaves |
 |---|---|---|
 | Classe criada | `OrdemDeServicoModulos` | `OrdemDeServicoChaves` |
 | Tabela filha | `TB_OrdemDeServicoModulos` | `TB_OrdemDeServicoChaves` |
@@ -519,7 +519,7 @@ código, no ponto em que afetam a implementação.
    parâmetro de segmento.
    **Decisão:** os dois artefatos se conciliam porque as operações
    `consultarBlocosDadosTecnicos(segmento)` e `consultarTecnicosHabilitados(segmento)` **recebem** o
-   segmento como parâmetro — ou seja, a seleção da tela serve para exibir o bloco certo e filtrar os
+   segmento como parâmetro, ou seja, a seleção da tela serve para exibir o bloco certo e filtrar os
    técnicos, exatamente como o mockup descreve, enquanto a gravação usa o segmento do orçamento. Na
    tela, o rádio já vem marcado com o `segmentoPretendido` do orçamento escolhido, então os dois
    coincidem.
@@ -527,7 +527,7 @@ código, no ponto em que afetam a implementação.
 3. **`Tecnico` ou `Usuario`?**
    A versão anterior do Diagrama de Classes (e o Mapeamento OR de 28/09) tinha `Tecnico`,
    `TecnicoDeChaves`, `TecnicoDeModulos`, `Usuario` e `Administrador` em hierarquia, com cinco
-   tabelas. A **versão corrigida de 01/10** — a vigente — trocou tudo por uma classe `Usuario` com o
+   tabelas. A **versão corrigida de 01/10** (a vigente) trocou tudo por uma classe `Usuario` com o
    atributo enumerado `tipoUsuario`, e o Mapeamento OR acompanhou, deixando só `TB_Usuario`.
    **Decisão:** implementamos a versão de 01/10, que é a vigente.
 
@@ -540,7 +540,7 @@ código, no ponto em que afetam a implementação.
 
 ### Lacunas (coisas que nenhum artefato define)
 
-5. **POS-06 — registro de auditoria.** A pós-condição exige *"usuário, data e hora da operação"*, mas
+5. **POS-06: registro de auditoria.** A pós-condição exige *"usuário, data e hora da operação"*, mas
    não existe classe nem tabela de auditoria em nenhum artefato. **Não implementamos**: inventar uma
    tabela contrariaria a regra de basear o código na modelagem. Fica registrado como lacuna a ser
    corrigida numa próxima versão do Diagrama de Classes e do Mapeamento OR.
@@ -567,7 +567,7 @@ código, no ponto em que afetam a implementação.
     `TB_ServicoBase.observacoesTecnicas`, prefixada por `"Justificativa (RN-05): "`, por ser a única
     coluna de texto livre ligada ao item incluído.
 
-11. **POS-03 — "os itens são copiados para a OS".** O Mapeamento OR **não tem** uma tabela de itens da
+11. **POS-03: "os itens são copiados para a OS".** O Mapeamento OR **não tem** uma tabela de itens da
     Ordem de Serviço. **Decisão:** a POS-03 é cumprida pela associação: a OS aponta para o orçamento,
     e `OrdemDeServico.getItens()` e `getValorTotal()` leem os itens dele. Não há duplicação de dados,
     que é o que o Mapeamento OR determina.
@@ -576,8 +576,8 @@ código, no ponto em que afetam a implementação.
 
 | Método | Por que foi preciso |
 |---|---|
-| `OrcamentoDAO.atualizarStatus()` | POS-02 e RN-05 — sem ele o orçamento nunca mudaria de situação |
-| `OrcamentoDAO.incluirItem()` | FA-11B — sem ele a inclusão de item não teria efeito |
+| `OrcamentoDAO.atualizarStatus()` | POS-02 e RN-05: sem ele o orçamento nunca mudaria de situação |
+| `OrcamentoDAO.incluirItem()` | FA-11B: sem ele a inclusão de item não teria efeito |
 | `OrdemServicoDAO.buscarHistoricoTecnico()` | Passo 8.2 da V1, POS-05 e o botão do mockup |
 | `ControladoraRegistrarOS.consultarHistoricoTecnico()` | A operação acima, exposta à tela |
 
@@ -597,7 +597,7 @@ O guia detalhado, com o passo a passo do XAMPP e a tabela de problemas comuns, e
 | **VS Code** com a extensão *Extension Pack for Java* | abrir e executar o projeto |
 
 O driver JDBC já vem junto, em `lib/mysql-connector-j-8.4.0.jar`. Nada é baixado em tempo de
-execução, e **nenhum acesso à internet é necessário** — é a **RNF-4** (operação restrita à rede
+execução, e **nenhum acesso à internet é necessário**: é a **RNF-4** (operação restrita à rede
 local) valendo também para o ambiente de desenvolvimento.
 
 O XAMPP instala o **MariaDB**, um fork do MySQL que fala o mesmo protocolo: o módulo continua
@@ -636,13 +636,13 @@ SELECT * FROM TB_Orcamento;
 ### 8.3 Ajustar usuário e senha, se necessário
 
 O projeto está configurado para o padrão do XAMPP: usuário `root` com senha em branco. Se o seu
-banco for diferente, edite as três constantes em `src/uniaoevolutions/persistencia/Conexao.java` —
+banco for diferente, edite as três constantes em `src/uniaoevolutions/persistencia/Conexao.java`:
 é a única classe do projeto que conhece a localização e as credenciais do banco.
 
 ### 8.4 Executar
 
 1. No VS Code: **File → Open Folder** e escolha a pasta `registrar-ordem-servico`.
-   Precisa ser **essa** pasta — a que tem `src/` e `lib/` dentro.
+   Precisa ser **essa** pasta: a que tem `src/` e `lib/` dentro.
 2. Abra `src/uniaoevolutions/MainRegistrarOrdemServico.java`.
 3. Clique em **▶ Run** acima do método `main`.
 
@@ -665,23 +665,23 @@ No Linux e no macOS, troque a `\` por `/` e o `;` do classpath por `:`.
    **FA-11A**, e o banco nem foi acessado.
 3. Preencha Quilometragem `120450`, Prazo `02/09/2026`, os três campos de Módulos e clique em
    **Salvar**: aparece *"Ordem de Serviço OS-2026-0001 registrada com sucesso"* e a OS impressa.
-4. Repare que o orçamento `ORC-2026-0231` **sumiu da lista** — é a **POS-02** e a **RN-01**.
+4. Repare que o orçamento `ORC-2026-0231` **sumiu da lista**: é a **POS-02** e a **RN-01**.
 5. Selecione agora o orçamento de Chaves: o bloco técnico muda sozinho e a lista de técnicos passa a
-   mostrar só a técnica de chaves e o administrador — é a **RN-04**.
+   mostrar só a técnica de chaves e o administrador: é a **RN-04**.
 6. Clique em **Ver atendimentos anteriores** com o veículo QAF-7C21 para ver a OS gravada no passo 3.
 7. Pare o módulo MySQL no painel do XAMPP e tente salvar: aparece *"Não foi possível registrar a
-   Ordem de Serviço. Tente novamente."* — é o **FA-12**.
+   Ordem de Serviço. Tente novamente."*: é o **FA-12**.
 
 ### 8.6 Problemas comuns
 
 | Sintoma | Causa provável |
 |---|---|
 | `No suitable driver found for jdbc:mysql:` | Pasta errada aberta no VS Code (tem que ser a que contém `src/` e `lib/`) |
-| `Access denied for user 'root'@'localhost'` | Usuário ou senha errados em `Conexao.java` — ver 8.3 |
-| `Unknown database 'uniao_evolutions'` | O `schema.sql` não foi executado — ver 8.2 |
+| `Access denied for user 'root'@'localhost'` | Usuário ou senha errados em `Conexao.java`; ver 8.3 |
+| `Unknown database 'uniao_evolutions'` | O `schema.sql` não foi executado; ver 8.2 |
 | `Table 'uniao_evolutions.TB_Orcamento' doesn't exist` | O `schema.sql` foi executado só em parte |
 | `Communications link failure` | O módulo MySQL do XAMPP não está rodando, ou não está na porta 3306 |
-| O MySQL do XAMPP não inicia (*"Port 3306 in use"*) | Outro MySQL já ocupa a porta — pare o serviço dele em `services.msc` |
+| O MySQL do XAMPP não inicia (*"Port 3306 in use"*) | Outro MySQL já ocupa a porta: pare o serviço dele em `services.msc` |
 | "Nenhum orçamento aprovado disponível" ao abrir a tela | Os orçamentos de exemplo já foram convertidos numa demonstração anterior; reimporte o `schema.sql` |
 
 ---
@@ -727,7 +727,7 @@ tratado como **dado**. De quebra, um nome com apóstrofo (`D'Angelo`) deixa de q
 
 **Por que a gravação está numa transação?**
 Porque a herança virou duas tabelas. Se o `INSERT` em `TB_OrdemDeServicoModulos` falhasse depois do
-`INSERT` em `TB_OrdemDeServico`, ficaria uma OS sem dados técnicos — um objeto pela metade. O
+`INSERT` em `TB_OrdemDeServico`, ficaria uma OS sem dados técnicos: um objeto pela metade. O
 `commit`/`rollback` garante tudo ou nada.
 
 **Como a RN-07 reinicia a numeração a cada ano?**
@@ -741,7 +741,7 @@ Fica registrado como limitação conhecida deste protótipo acadêmico.
 
 **Por que a validação está no objeto de domínio e não na controladora?**
 Porque a RN-03 e a RN-04 são regras do negócio, não do caso de uso. Ficando em `validar()`, elas valem
-para qualquer coisa que crie uma OS — este caso de uso, uma importação futura, um teste. A
+para qualquer coisa que crie uma OS: este caso de uso, uma importação futura, um teste. A
 controladora só decide **quando** validar.
 
 **Por que a senha do banco está no código?**

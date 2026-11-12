@@ -11,14 +11,10 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * DAO da classe Usuario - tabela TB_Usuario.
- *
- * Nenhum método exibe mensagem: a SQLException sobe para a controladora.
- */
+/** DAO de Usuario (TB_Usuario). */
 public class UsuarioDAO {
 
-    /** Mensagem 1.3: buscarTecnico(). Devolve null se o código não existir. */
+    /** Mensagem 1.3; null se não existir. */
     public Usuario buscarUsuario(int id) throws SQLException {
         String sql = "SELECT idUsuario, nome, tipoUsuario FROM TB_Usuario WHERE idUsuario = ?";
         Connection conexao = Conexao.conectar();
@@ -32,20 +28,13 @@ public class UsuarioDAO {
         }
     }
 
-    /**
-     * RN-04: técnicos habilitados no segmento, para a combo "Técnico
-     * responsável" do mockup.
-     *
-     * O Administrador entra na lista porque "herda de ambos os técnicos"
-     * (Descrição Expandida), podendo assumir esses papéis.
-     */
+    /** RN-04: habilitados no segmento; inclui o Administrador (herda dos dois técnicos). */
     public List<Usuario> buscarTecnicosHabilitados(String segmento) throws SQLException {
         String tipoDoSegmento = Segmento.CHAVES.equals(segmento)
                 ? TipoUsuario.tecnicoDeChaves.name()
                 : TipoUsuario.tecnicoDeModulos.name();
 
-        // O CASE no ORDER BY deixa o administrador por último: ele é
-        // habilitado, mas é a alternativa, não o responsável natural.
+        // Administrador por último.
         String sql = "SELECT idUsuario, nome, tipoUsuario FROM TB_Usuario "
                    + " WHERE tipoUsuario = ? OR tipoUsuario = ? "
                    + " ORDER BY CASE WHEN tipoUsuario = ? THEN 1 ELSE 0 END, nome";
@@ -67,7 +56,7 @@ public class UsuarioDAO {
         }
     }
 
-    /** Monta um Usuario com a linha atual do ResultSet. */
+    /** Usuario da linha atual. */
     private Usuario montarUsuario(ResultSet resultado) throws SQLException {
         return new Usuario(
                 resultado.getInt("idUsuario"),

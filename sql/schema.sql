@@ -3,15 +3,10 @@
 -- Casos de uso: Registrar Ordem de Serviço (RF-6, 1ª iteração)
 --               Solicitar Orçamento        (RF-5, 2ª iteração)
 --
--- Este script é a tradução literal do artefato
---   2° Iteração Solicitar Orçamento/Design/Mapeamento_Objeto_Relacional_v2.docx
--- que substitui o Mapeamento OR da 1ª iteração. Os nomes das tabelas e das
--- colunas são exatamente os do mapeamento.
---
--- Colunas que não constam do mapeamento estão marcadas com [ACRESCIMO]:
---   [ACRESCIMO 1] TB_ItemOrcamento.quantidade  (vem da 1ª iteração)
---   [ACRESCIMO 2] TB_OrdemDeServico.numeroOS   (vem da 1ª iteração)
--- Justificativas na seção 7 do DOCUMENTACAO.md e no RELATORIO_ITERACAO2.md.
+-- Tradução do Mapeamento_Objeto_Relacional_v2.docx (2ª iteração), com os mesmos
+-- nomes de tabelas e colunas. Colunas fora do mapeamento:
+--   [ACRESCIMO 1] TB_ItemOrcamento.quantidade  (1ª iteração)
+--   [ACRESCIMO 2] TB_OrdemDeServico.numeroOS   (1ª iteração)
 -- =====================================================================
 
 CREATE DATABASE IF NOT EXISTS uniao_evolutions
@@ -20,10 +15,7 @@ CREATE DATABASE IF NOT EXISTS uniao_evolutions
 
 USE uniao_evolutions;
 
--- Apaga só as tabelas destes casos de uso, na ordem inversa das
--- dependências (a tabela que aponta sai antes da tabela apontada). O script
--- pode ser executado quantas vezes for preciso, e nenhuma outra tabela do
--- banco é afetada.
+-- Apaga só as tabelas destes casos de uso, das dependentes para as referenciadas.
 DROP TABLE IF EXISTS TB_Pagamento;
 DROP TABLE IF EXISTS TB_OrdemDeServicoChaves;
 DROP TABLE IF EXISTS TB_OrdemDeServicoModulos;
@@ -41,10 +33,7 @@ DROP TABLE IF EXISTS TB_Cliente;
 
 -- ---------------------------------------------------------------------
 -- TB_Cliente(idCliente<<PK>>, nome, cpfCnpj<<UNIQUE>>, telefone)
--- 2ª iteração: incluída a coluna cpfCnpj.
--- cpfCnpj aceita NULL: o cadastro rápido do FA-02 pede só nome e telefone
--- (<<create>> Cliente(nome, telefone)). O UNIQUE do MySQL/MariaDB permite
--- vários NULL. O valor é gravado só com dígitos (11 = CPF, 14 = CNPJ).
+-- cpfCnpj: só dígitos; NULL no cadastro rápido do FA-02 (o UNIQUE aceita vários NULL).
 -- ---------------------------------------------------------------------
 CREATE TABLE TB_Cliente (
     idCliente INT AUTO_INCREMENT PRIMARY KEY,
@@ -56,8 +45,7 @@ CREATE TABLE TB_Cliente (
 -- ---------------------------------------------------------------------
 -- TB_Veiculo(idVeiculo<<PK>>, marca, modelo, anoModelo, motorizacao,
 --            placa<<UNIQUE>>, numeroChassi<<UNIQUE>>)
--- 2ª iteração: as colunas de módulo e de senhas saíram daqui e foram para
--- TB_ModuloECU e TB_InformacoesSegurancaVeiculo.
+-- Módulo e senhas ficam em TB_ModuloECU e TB_InformacoesSegurancaVeiculo.
 -- ---------------------------------------------------------------------
 CREATE TABLE TB_Veiculo (
     idVeiculo    INT AUTO_INCREMENT PRIMARY KEY,
@@ -72,7 +60,7 @@ CREATE TABLE TB_Veiculo (
 -- ---------------------------------------------------------------------
 -- TB_InformacoesSegurancaVeiculo(idVeiculo<<PK>><<FK>>, codigoMecanico,
 --   senhaImobilizador, senhaAlarme, senhaRadio)
--- Associação "Veiculo 1 possui 0..1 InformacoesSegurancaVeiculo".
+-- Veiculo 1 possui 0..1 InformacoesSegurancaVeiculo.
 -- ---------------------------------------------------------------------
 CREATE TABLE TB_InformacoesSegurancaVeiculo (
     idVeiculo         INT PRIMARY KEY,
@@ -86,9 +74,7 @@ CREATE TABLE TB_InformacoesSegurancaVeiculo (
 -- ---------------------------------------------------------------------
 -- TB_ModuloECU(idModuloECU<<PK>>, tipoModulo, modeloECU,
 --              identificacaoModulo, idVeiculo<<FK>>)
--- Associação "Veiculo 1 possui 0..* ModuloECU".
--- modeloECU e identificacaoModulo aceitam NULL: no FAV-8.1 (etiqueta
--- ilegível) os dois são dispensados.
+-- Veiculo 1 possui 0..* ModuloECU. modeloECU e identificacaoModulo: NULL no FAV-8.1.
 -- ---------------------------------------------------------------------
 CREATE TABLE TB_ModuloECU (
     idModuloECU         INT AUTO_INCREMENT PRIMARY KEY,
@@ -102,7 +88,7 @@ CREATE TABLE TB_ModuloECU (
 -- ---------------------------------------------------------------------
 -- TB_ServicoBase(idServicoBase<<PK>>, descricao, categoria,
 --                observacoesTecnicas)
--- Catálogo de serviços base (RF-4). A categoria é o segmento (RN-03).
+-- Catálogo (RF-4). categoria = segmento (RN-03).
 -- ---------------------------------------------------------------------
 CREATE TABLE TB_ServicoBase (
     idServicoBase       INT AUTO_INCREMENT PRIMARY KEY,
@@ -126,17 +112,8 @@ CREATE TABLE TB_Usuario (
 --   dataValidade, origemAtendimento, status, valorEstimado, observacoes,
 --   motivoCancelamento, idCliente<<FK>>, idVeiculo<<FK>>, idUsuario<<FK>>)
 --   status {Rascunho | Em análise | Aprovado | Recusado | Expirado | Cancelado}
---
--- Tabela da SUPERCLASSE Orcamento. 2ª iteração: incluídas numero,
--- dataValidade, observacoes, motivoCancelamento e idUsuario (técnico que
--- elaborou o orçamento); removida segmentoPretendido - o segmento passa a
--- ser dado pela tabela de subclasse em que o orçamento tem linha.
---
--- numero e dataValidade aceitam NULL por causa do FA-12D: o rascunho é
--- salvo "sem número definitivo e sem contagem do prazo de validade".
--- status é VARCHAR (e não ENUM) porque a 1ª iteração usa as situações
--- "Aprovado pelo cliente", "Convertido em OS" e "Aguardando aprovação do
--- cliente", que não constam da lista acima - ver RELATORIO_ITERACAO2.md.
+-- Superclasse. O segmento vem da subclasse com linha. numero e dataValidade: NULL
+-- no rascunho (FA-12D). status é VARCHAR porque a 1ª iteração usa outras situações.
 -- ---------------------------------------------------------------------
 CREATE TABLE TB_Orcamento (
     idOrcamento        INT AUTO_INCREMENT PRIMARY KEY,
@@ -161,11 +138,7 @@ CREATE TABLE TB_Orcamento (
 --   diagnosticoPendenteBancada, identificacaoIlegivel, registroFotografico,
 --   descricaoFisicaPlaca, idModuloECU<<FK>>)
 --   idModuloECU - opcional (0..1)
---
--- Tabela da SUBCLASSE OrcamentoModulos: "uma tabela por subclasse", a
--- mesma estratégia de OrdemDeServico. A PK é também FK para a superclasse.
--- sintomaRelatado aceita NULL por causa do rascunho (FA-12D); a RN-04 é
--- cobrada na controladora, no registro definitivo.
+-- Subclasse (PK = FK). sintomaRelatado: NULL no rascunho; a RN-04 é cobrada na controladora.
 -- ---------------------------------------------------------------------
 CREATE TABLE TB_OrcamentoModulos (
     idOrcamento                INT PRIMARY KEY,
@@ -183,7 +156,7 @@ CREATE TABLE TB_OrcamentoModulos (
 -- TB_OrcamentoChaves(idOrcamento<<PK>><<FK>>, tipoChave, quantidadeCopias,
 --   possuiTelecomando, codigoTransponder, situacaoImobilizador, perdaTotal,
 --   documentoPropriedade, nomeSolicitante, documentoSolicitante)
--- Tabela da SUBCLASSE OrcamentoChaves. Mesma estratégia acima.
+-- Subclasse (PK = FK).
 -- ---------------------------------------------------------------------
 CREATE TABLE TB_OrcamentoChaves (
     idOrcamento          INT PRIMARY KEY,
@@ -202,11 +175,8 @@ CREATE TABLE TB_OrcamentoChaves (
 -- ---------------------------------------------------------------------
 -- TB_ItemOrcamento(idItemOrcamento<<PK>>, valorProposto,
 --                  idOrcamento<<PK>><<FK>>, idServicoBase<<FK>>)
--- Composição "Orcamento 1 compõe 1..* ItemOrcamento": PK composta.
---
--- [ACRESCIMO 1] coluna "quantidade" (1ª iteração): a tela do Registrar OS
---   tem a coluna "Qtd." e incluirItemOrdemServico recebe a quantidade. Os
---   itens do Solicitar Orçamento são gravados com o DEFAULT 1.
+-- Composição 1..*: PK composta.
+-- [ACRESCIMO 1] quantidade: coluna "Qtd." do Registrar OS; no Solicitar Orçamento, DEFAULT 1.
 -- ---------------------------------------------------------------------
 CREATE TABLE TB_ItemOrcamento (
     idItemOrcamento INT AUTO_INCREMENT,
@@ -225,10 +195,7 @@ CREATE TABLE TB_ItemOrcamento (
 --   dataEmissaoResponsabilidade, quilometragem, prazoEstimado,
 --   observacoes, idOrcamento<<FK>><<UNIQUE>>, idVeiculo<<FK>>,
 --   idUsuario<<FK>>)
--- Inalterada em relação à 1ª iteração.
---
--- [ACRESCIMO 2] coluna "numeroOS" (1ª iteração): exigida pela RN-07 do
---   Registrar OS (formato OS-AAAA-NNNN). Aceita NULL por causa do rascunho.
+-- [ACRESCIMO 2] numeroOS: RN-07 do Registrar OS (OS-AAAA-NNNN); NULL no rascunho.
 -- ---------------------------------------------------------------------
 CREATE TABLE TB_OrdemDeServico (
     idOrdemDeServico            INT AUTO_INCREMENT PRIMARY KEY,
@@ -250,7 +217,7 @@ CREATE TABLE TB_OrdemDeServico (
 );
 
 -- TB_OrdemDeServicoModulos(idOrdemDeServico<<PK>><<FK>>, relatoInicial, ...)
--- Tabela da SUBCLASSE OrdemDeServicoModulos (1ª iteração, inalterada).
+-- Subclasse (PK = FK).
 CREATE TABLE TB_OrdemDeServicoModulos (
     idOrdemDeServico    INT PRIMARY KEY,
     relatoInicial       VARCHAR(255),
@@ -265,7 +232,7 @@ CREATE TABLE TB_OrdemDeServicoModulos (
 );
 
 -- TB_OrdemDeServicoChaves(idOrdemDeServico<<PK>><<FK>>, servicoExecutado)
--- Tabela da SUBCLASSE OrdemDeServicoChaves (1ª iteração, inalterada).
+-- Subclasse (PK = FK).
 CREATE TABLE TB_OrdemDeServicoChaves (
     idOrdemDeServico INT PRIMARY KEY,
     servicoExecutado VARCHAR(255),
@@ -275,7 +242,7 @@ CREATE TABLE TB_OrdemDeServicoChaves (
 
 -- TB_Pagamento(idPagamento<<PK>>, formaPagamento, valor, data,
 --              idOrdemDeServico<<FK>><<UNIQUE>>)
--- Consta do Mapeamento OR; não é usada pelos dois casos de uso.
+-- Do Mapeamento OR; não usada nestes casos de uso.
 CREATE TABLE TB_Pagamento (
     idPagamento      INT AUTO_INCREMENT PRIMARY KEY,
     formaPagamento   VARCHAR(30) NOT NULL,
@@ -288,16 +255,10 @@ CREATE TABLE TB_Pagamento (
 
 -- =====================================================================
 -- DADOS DE EXEMPLO
--- Prontos para testar só selecionando: cada cliente tem veículo, módulo,
--- informações de segurança e orçamentos anteriores (é o orçamento que liga
--- o veículo ao cliente - RN-02). Inclui os clientes e veículos dos dois
--- mockups. Os orçamentos 231, 232 e 233 são os da 1ª iteração e não mudaram;
--- os demais têm números menores que 0231, então o próximo número continua
--- ORC-2026-0234, e situações que não aparecem no Registrar OS.
---
--- Os CPFs do MOCKUP-solicitar-orcamento.pdf (024.577.310-45 e
--- 311.904.227-80) têm dígitos verificadores inválidos; aqui foram usados
--- os mesmos nove primeiros dígitos com os verificadores corretos.
+-- Cada cliente tem veículo, módulo, informações de segurança e orçamentos (o orçamento
+-- liga veículo e cliente, RN-02). Orçamentos 231 a 233: 1ª iteração. Os demais têm
+-- número menor que 0231 (próximo: ORC-2026-0234) e não aparecem no Registrar OS.
+-- CPFs do mockup com os dígitos verificadores corrigidos.
 -- =====================================================================
 
 INSERT INTO TB_Cliente (nome, cpfCnpj, telefone) VALUES
@@ -333,9 +294,8 @@ INSERT INTO TB_ModuloECU (tipoModulo, modeloECU, identificacaoModulo, idVeiculo)
     ('TCU – Câmbio Automático',    'Aisin TC-8956',              'AS-89661-K', 5),  -- 5
     ('Painel de Instrumentos',     'Bosch 0263',                 'BP-71542-D', 6);
 
--- PRE-02: ao menos um serviço base em cada segmento. Os três últimos são os
--- serviços de chaves que aparecem no MOCKUP-solicitar-orcamento.pdf; o
--- último é o procedimento acrescentado na perda total (FAV-8.4A.4).
+-- PRE-02: serviços nos dois segmentos. Os três últimos são os de chaves do mockup;
+-- o último é o procedimento da perda total (FAV-8.4A.4).
 INSERT INTO TB_ServicoBase (descricao, categoria, observacoesTecnicas) VALUES
     ('Diagnóstico em bancada com simulação de sinais',      'Módulos', 'Requer fonte simuladora de sinais'),
     ('Reparo de trilha e substituição de driver de ignição', 'Módulos', 'Reparo com retrabalho de trilha'),
@@ -352,9 +312,8 @@ INSERT INTO TB_Usuario (nome, tipoUsuario) VALUES
     ('Eduardo José',    'tecnicoDeModulos'),
     ('Jamily Sales',    'tecnicoDeChaves'),
     ('Caetano Raimundo','administrador');
--- 187 são de 2025 e viraram as três OS anteriores do QAF-7C21 ("Ver 3
--- atendimentos anteriores", como no mockup). Os demais ligam os outros
--- veículos aos seus clientes.
+-- Orçamentos. 118, 142 e 187 são de 2025 e viraram as três OS anteriores do QAF-7C21
+-- ("Ver 3 atendimentos anteriores" do mockup). Os demais ligam veículos e clientes.
 INSERT INTO TB_Orcamento (idOrcamento, numero, dataSolicitacao, dataValidade, origemAtendimento,
                           status, valorEstimado, observacoes, idCliente, idVeiculo, idUsuario) VALUES
     (118, 'ORC-2025-0118', '2025-03-11', '2025-03-26', 'Presencial', 'Convertido em OS',                180.00, NULL, 1, 1, 1),
@@ -383,7 +342,7 @@ INSERT INTO TB_OrcamentoChaves (idOrcamento, tipoChave, quantidadeCopias, possui
     (205, 'Canivete com transponder', 1, TRUE,  'ID46 – PCF7946', 'Funcionando – com chave válida', FALSE),
     (224, 'Chave com transponder',    2, FALSE, 'ID4D',           'Funcionando – com chave válida', FALSE),
     (232, 'Chave com transponder',    2, TRUE,  'ID48',           'Funcionando – com chave válida', FALSE);
--- serviços do mockup (total R$ 750,00).
+-- Itens. Os do ORC-2026-0231 são os três serviços do mockup (total R$ 750,00).
 INSERT INTO TB_ItemOrcamento (valorProposto, quantidade, idOrcamento, idServicoBase) VALUES
     (180.00, 1, 118, 1),
     (260.00, 1, 142, 2),
@@ -399,7 +358,7 @@ INSERT INTO TB_ItemOrcamento (valorProposto, quantidade, idOrcamento, idServicoB
     (130.00, 2, 232, 4),
     (220.00, 1, 232, 5),
     (300.00, 1, 233, 1);
--- de 2025: não interfere no OS-2026-NNNN do Registrar OS.
+-- OS de 2025 dos orçamentos 118, 142 e 187 (não afetam o OS-2026-NNNN).
 INSERT INTO TB_OrdemDeServico (numeroOS, dataAbertura, statusOS, quilometragem, prazoEstimado,
                                observacoes, idOrcamento, idVeiculo, idUsuario) VALUES
     ('OS-2025-0031', '2025-03-13', 'Concluída', 121400, '2025-03-18', NULL, 118, 1, 1),

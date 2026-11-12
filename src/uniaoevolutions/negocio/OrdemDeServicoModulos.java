@@ -2,14 +2,7 @@ package uniaoevolutions.negocio;
 
 import java.util.Date;
 
-/**
- * OS do segmento Reparação / Programação de Módulos (ECU) - variante V1 da
- * Descrição Expandida.
- *
- * testesEntradaSaida, confirmacaoDefeito, causaIdentificada e reparoRealizado
- * não são preenchidos no registro: pertencem à execução do serviço, que é
- * outro caso de uso.
- */
+/** OS do segmento Módulos (V1). Os campos de execução ficam vazios no registro (outro caso de uso). */
 public class OrdemDeServicoModulos extends OrdemDeServico {
 
     private String relatoInicial;
@@ -38,7 +31,7 @@ public class OrdemDeServicoModulos extends OrdemDeServico {
         return Segmento.MODULOS;
     }
 
-    /** RN-03 no segmento Módulos: o comum a qualquer OS mais os campos da V1. */
+    /** RN-03 (Módulos). */
     @Override
     public void validar() {
         super.validar();

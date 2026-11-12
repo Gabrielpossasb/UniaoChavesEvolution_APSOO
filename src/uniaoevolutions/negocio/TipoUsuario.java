@@ -1,21 +1,13 @@
 package uniaoevolutions.negocio;
 
-/**
- * Valores do atributo tipoUsuario da classe Usuario.
- *
- * A grafia é a dos artefatos (minúscula inicial), para que o valor gravado no
- * ENUM do MySQL seja literalmente name().
- */
+/** Valores de Usuario.tipoUsuario, com a grafia do ENUM do banco. */
 public enum TipoUsuario {
 
     administrador,
     tecnicoDeChaves,
     tecnicoDeModulos;
 
-    /**
-     * RN-04: diz se este tipo pode ser responsável por uma OS do segmento.
-     * O Administrador herda dos dois técnicos, logo é habilitado em ambos.
-     */
+    /** RN-04. O Administrador é habilitado nos dois segmentos. */
     public boolean habilitadoEm(String segmento) {
         if (this == administrador) {
             return true;

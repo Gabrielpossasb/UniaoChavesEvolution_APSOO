@@ -20,10 +20,8 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * Classe <<control>> do Diagrama de Classes e objeto ":Sistema" do Diagrama de
- * Comunicação: coordena o caso de uso entre a tela e as DAOs.
- *
- * Sem SQL e sem JOptionPane - erros sobem como exceção para a tela tratar.
+ * <<control>> do Diagrama de Classes e ":Sistema" do Diagrama de Comunicação.
+ * Sem SQL e sem JOptionPane: erros sobem como exceção.
  */
 public class ControladoraRegistrarOS {
 
@@ -31,11 +29,11 @@ public class ControladoraRegistrarOS {
     private final UsuarioDAO usuarioDAO = new UsuarioDAO();
     private final OrdemServicoDAO ordemServicoDAO = new OrdemServicoDAO();
 
-    /** Ordem de Serviço que está sendo montada no formulário. */
+    /** OS em montagem no formulário. */
     private OrdemDeServico osEmRegistro;
-    /** Item pendente de justificativa, usado pelo FA-11B. */
+    /** FA-11B: item pendente de justificativa. */
     private ItemOrcamento itemPendente;
-    /** Orçamento a que o item pendente pertence (FA-11B). */
+    /** FA-11B: orçamento do item pendente. */
     private Orcamento orcamentoDoItemPendente;
 
     // =================================================================
@@ -43,11 +41,8 @@ public class ControladoraRegistrarOS {
     // =================================================================
 
     /**
-     * Passo 1 (RN-07): reserva o número OS-AAAA-NNNN e marca a data de hoje.
-     *
-     * O segmento ainda é desconhecido, então o rascunho nasce como
-     * OrdemDeServicoModulos (segmento pré-selecionado no mockup); a subclasse
-     * definitiva é escolhida em registrarOrdemServico().
+     * Passo 1 (RN-07): reserva o número e a data. Nasce como OrdemDeServicoModulos
+     * (pré-seleção do mockup); a subclasse final sai em registrarOrdemServico().
      */
     public OrdemDeServico iniciarRegistroOS() throws SQLException {
         OrdemDeServico os = new OrdemDeServicoModulos();
@@ -63,12 +58,12 @@ public class ControladoraRegistrarOS {
     // Consultas (passos 2, 4, 6 e 9 do fluxo principal)
     // =================================================================
 
-    /** Passo 2 (RN-01): orçamentos aprovados disponíveis. Lista vazia = FA-02. */
+    /** Passo 2 (RN-01). Lista vazia: FA-02. */
     public List<Orcamento> consultarOrcamentosAprovados() throws SQLException {
         return orcamentoDAO.buscarOrcamentosAprovados();
     }
 
-    /** Passo 4 (RN-02): dados de cliente, veículo, segmento e itens do orçamento. */
+    /** Passo 4 (RN-02): orçamento com cliente, veículo e itens. */
     public Orcamento consultarOrcamento(int idOrcamento) throws SQLException {
         Orcamento orcamento = orcamentoDAO.buscarOrcamento(idOrcamento);
         if (orcamento == null) {
@@ -77,7 +72,7 @@ public class ControladoraRegistrarOS {
         return orcamento;
     }
 
-    /** Passo 6: campos exigidos pela RN-03 no segmento (variantes V1 e V2). */
+    /** Passo 6: campos exigidos pela RN-03 no segmento. */
     public List<String> consultarBlocosDadosTecnicos(String segmento) {
         List<String> campos = new ArrayList<>();
         if (Segmento.CHAVES.equals(segmento)) {
@@ -95,7 +90,7 @@ public class ControladoraRegistrarOS {
         return campos;
     }
 
-    /** Passo 9 (RN-04): técnicos habilitados no segmento. Lista vazia = FA-09. */
+    /** Passo 9 (RN-04). Lista vazia: FA-09. */
     public List<Usuario> consultarTecnicosHabilitados(String segmento) throws SQLException {
         return usuarioDAO.buscarTecnicosHabilitados(segmento);
     }
@@ -105,15 +100,11 @@ public class ControladoraRegistrarOS {
     // =================================================================
 
     /**
-     * Mensagem 1 do Diagrama de Comunicação e operação do Contrato de Operação.
-     * O corpo segue a ordem das mensagens 1.1 a 1.11 do diagrama corrigido
-     * (Design/Diagrama de Comunicação.corrigido.docx), marcadas nos comentários.
-     * Os nomes seguem o Diagrama de Classes corrigido, que é posterior: por
-     * isso 1.2 é orc.getVeiculo() (não há VeiculoDAO), 1.3 é
-     * usuarioDAO.buscarUsuario() (não há TecnicoDAO) e 1.8-1.10 são os
-     * associar*() da OrdemDeServico (não há associaOS).
+     * Mensagem 1 do Diagrama de Comunicação (corrigido): ordem das mensagens 1.1 a 1.11.
+     * Nomes do Diagrama de Classes: 1.2 orc.getVeiculo(), 1.3 usuarioDAO.buscarUsuario(),
+     * 1.8-1.10 associar*() da OrdemDeServico.
      *
-     * @return a Ordem de Serviço registrada (POS-01).
+     * @return a OS registrada (POS-01).
      */
     public OrdemDeServico registrarOrdemServico(int orcamentoSelecionado,
                                                 int tecnicoSelecionado,
@@ -130,7 +121,7 @@ public class ControladoraRegistrarOS {
         if (orc == null) {
             throw new IllegalArgumentException("Selecione o orçamento que originará a Ordem de Serviço.");
         }
-        // RN-01: a origem tem de estar aprovada e ainda não convertida.
+        // RN-01: aprovado e não convertido.
         if (!orc.podeGerarOrdemDeServico()) {
             throw new IllegalArgumentException(
                     "O orçamento " + orc.getNumeroOrcamento() + " não está aprovado pelo cliente.");
@@ -165,18 +156,16 @@ public class ControladoraRegistrarOS {
         // 1.10 associaOS(os) -> tec   (Diagrama de Classes: associarTecnico)
         os.associarTecnico(tec);
 
-        // RN-03 e RN-04, antes de qualquer acesso ao banco (não é mensagem do
-        // diagrama). Se falhar, a exceção sobe para a tela (FA-11A) e nada é
-        // gravado: a OS marcada em 1.7 só existia em memória.
+        // RN-03 e RN-04 antes de gravar (não é mensagem do diagrama). Falha: FA-11A, nada gravado.
         os.validar();
 
-        // RN-07: número definitivo, reservado quando o formulário abriu.
+        // RN-07: número reservado no passo 1.
         os.setNumeroOS(numeroReservado());
 
         // 1.11  salvar(os)
         ordemServicoDAO.salvar(os);
 
-        // POS-02: o orçamento de origem passa para "Convertido em OS".
+        // POS-02: orçamento "Convertido em OS".
         orcamentoDAO.atualizarStatus(orc.getIdOrcamento(), Orcamento.STATUS_CONVERTIDO);
 
         this.osEmRegistro = os;
@@ -184,15 +173,10 @@ public class ControladoraRegistrarOS {
     }
 
     // =================================================================
-    // FA-11B - inclusão de item não previsto no orçamento aprovado
+    // FA-11B: inclusão de item não previsto
     // =================================================================
 
-    /**
-     * FA-11B.1 e FA-11B.2: recebe o item a incluir e exige a justificativa.
-     * O item fica pendente até registrarOSComAlteracao() (RN-05).
-     *
-     * @return a mensagem a ser exibida ao Administrador.
-     */
+    /** FA-11B.1-2: guarda o item e devolve a exigência de justificativa (RN-05). */
     public String incluirItemOrdemServico(String servicoOuPeca, int quantidade, double valor) {
         if (servicoOuPeca == null || servicoOuPeca.isBlank()) {
             throw new IllegalArgumentException("Informe o serviço ou a peça a incluir.");
@@ -221,12 +205,8 @@ public class ControladoraRegistrarOS {
     }
 
     /**
-     * FA-11B.3 e FA-11B.4: grava a alteração e devolve o novo valor total.
-     *
-     * RN-05: o orçamento volta para "Aguardando aprovação do cliente" e o caso
-     * de uso é encerrado sem registrar a Ordem de Serviço (FA-11B.5).
-     *
-     * @return a mensagem a ser exibida ao Administrador.
+     * FA-11B.3-4: grava a alteração e devolve a mensagem com o novo total. RN-05: orçamento
+     * volta a "Aguardando aprovação do cliente"; a OS não é registrada (FA-11B.5).
      */
     public String registrarOSComAlteracao(String servicoOuPeca, int quantidade, double valor,
                                           String justificativa) throws SQLException {
@@ -242,7 +222,7 @@ public class ControladoraRegistrarOS {
         orcamentoDAO.incluirItem(orcamento.getIdOrcamento(), servicoOuPeca,
                 orcamento.getSegmentoPretendido(), quantidade, valor, justificativa);
 
-        // RN-05: execução suspensa até nova aprovação do cliente.
+        // RN-05: execução suspensa até nova aprovação.
         orcamentoDAO.atualizarStatus(orcamento.getIdOrcamento(), Orcamento.STATUS_AGUARDANDO);
 
         double novoTotal = orcamento.getValorTotal() + (quantidade * valor);
@@ -257,16 +237,10 @@ public class ControladoraRegistrarOS {
     }
 
     // =================================================================
-    // FA-11C - salvar como rascunho
+    // FA-11C: rascunho
     // =================================================================
 
-    /**
-     * FA-11C: grava a OS "sem número definitivo e sem alteração da situação do
-     * orçamento".
-     *
-     * Os dados técnicos não são parâmetros: a RN-03 não é cobrada no rascunho,
-     * só o mínimo que o banco exige para guardar a linha.
-     */
+    /** FA-11C: grava sem número e sem mudar o orçamento. Não cobra a RN-03. */
     public void salvarRascunhoOS(int orcamentoSelecionado, int tecnicoSelecionado, int quilometragem,
                                  Date prazoEstimado, String observacoes) throws SQLException {
 
@@ -291,37 +265,31 @@ public class ControladoraRegistrarOS {
         os.associarVeiculo(orc.getVeiculo());
         os.associarTecnico(tec);
 
-        // "sem número definitivo": numeroOS nulo e situação "Rascunho".
+        // Sem número; situação "Rascunho".
         os.marcarComoRascunho(new Date());
         ordemServicoDAO.salvar(os);
 
-        // Sem atualizarStatus: é a diferença para o fluxo principal.
+        // Sem atualizarStatus do orçamento.
         this.osEmRegistro = os;
     }
 
     // =================================================================
-    // FA-00 - desistência do Administrador
+    // FA-00: desistência
     // =================================================================
 
-    /** FA-00.2: solicitação de confirmação da desistência. */
+    /** FA-00.2. */
     public String solicitarConfirmacaoDesistencia() {
         return "Confirma a desistência do registro da Ordem de Serviço?";
     }
 
-    /**
-     * FA-00.3 e FA-00.4: descarta o registro em andamento "mantendo o orçamento
-     * em sua situação original" - nada foi gravado, basta soltar os objetos.
-     */
+    /** FA-00.3-4: nada foi gravado; só solta os objetos. */
     public void descartarRegistro() {
         this.osEmRegistro = null;
         this.itemPendente = null;
         this.orcamentoDoItemPendente = null;
     }
 
-    /**
-     * Passo 8.2 (V1) e botão "Ver atendimentos anteriores" do mockup.
-     * ACRÉSCIMO à modelagem - ver DOCUMENTACAO.md.
-     */
+    /** ACRÉSCIMO: passo 8.2 (V1), botão "Ver atendimentos anteriores". */
     public List<String> consultarHistoricoTecnico(int idVeiculo) throws SQLException {
         SimpleDateFormat formato = new SimpleDateFormat("dd/MM/yyyy");
         List<String> linhas = new ArrayList<>();
@@ -335,10 +303,7 @@ public class ControladoraRegistrarOS {
         return linhas;
     }
 
-    /**
-     * Mensagens 1.5 e 1.6, com as guardas [seg = "Módulos"] e [seg = "Chaves"]:
-     * cria a OS na subclasse correspondente ao segmento.
-     */
+    /** Mensagens 1.5 e 1.6: cria a OS na subclasse do segmento. */
     private OrdemDeServico criarOrdemDeServico(String seg, int quilometragem, Date prazoEstimado,
                                                String observacoes, String relatoInicial,
                                                String condicaoRecebimento, String diagnosticoInicial,
@@ -352,7 +317,7 @@ public class ControladoraRegistrarOS {
         return new OrdemDeServicoChaves(quilometragem, prazoEstimado, observacoes, servicoExecutado);
     }
 
-    /** Número reservado no passo 1; se por algum motivo não houver, gera na hora. */
+    /** Número do passo 1; se faltar, gera. */
     private String numeroReservado() throws SQLException {
         if (osEmRegistro != null && osEmRegistro.getNumeroOS() != null) {
             return osEmRegistro.getNumeroOS();
@@ -360,18 +325,12 @@ public class ControladoraRegistrarOS {
         return ordemServicoDAO.gerarNumeroOS();
     }
 
-    /** Ordem de Serviço que está sendo montada, para a tela consultar. */
+    /** OS em montagem. */
     public OrdemDeServico getOsEmRegistro() {
         return osEmRegistro;
     }
 
-    /**
-     * Passo 3: guarda o orçamento escolhido e forma desde já os vínculos com
-     * ele e com o seu veículo (RN-02).
-     *
-     * Se o segmento mudar, o rascunho é recriado na subclasse correta,
-     * preservando o número e a data reservados no passo 1.
-     */
+    /** Passo 3: vincula orçamento e veículo (RN-02); recria a OS se o segmento mudar. */
     public void selecionarOrcamento(Orcamento orcamento) {
         if (osEmRegistro == null || orcamento == null) {
             return;

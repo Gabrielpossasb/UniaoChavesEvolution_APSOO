@@ -2,19 +2,7 @@ package uniaoevolutions.negocio;
 
 import java.util.Date;
 
-/**
- * Orçamento do segmento Reparação / Programação de Módulos (ECU) - variante
- * V1 do Solicitar Orçamento.
- *
- * Diagrama de Classes v2: sintomaRelatado, diagnosticoPendenteBancada,
- * identificacaoIlegivel, registroFotografico, descricaoFisicaPlaca;
- * <<create>> OrcamentoModulos(numero, dataValidade, origemAtendimento,
- * observacoes, sintomaRelatado, diagnosticoPendenteBancada) (mensagem 1.3),
- * setModuloIlegivel(registroFotografico, descricaoFisicaPlaca) (mensagem 1.5)
- * e associarModulo(mod) (mensagem 1.10).
- *
- * Associação: "OrcamentoModulos 0..* refere-se a 0..1 ModuloECU".
- */
+/** Orçamento do segmento Módulos (V1). Mensagens 1.3, 1.5 e 1.10. Refere-se a 0..1 ModuloECU. */
 public class OrcamentoModulos extends Orcamento {
 
     private String sintomaRelatado;
@@ -37,10 +25,7 @@ public class OrcamentoModulos extends Orcamento {
         this.diagnosticoPendenteBancada = diagnosticoPendenteBancada;
     }
 
-    /**
-     * Mensagem 1.5: [identificacaoIlegivel] setModuloIlegivel(...) - FAV-8.1:
-     * a etiqueta do módulo está ilegível, então valem a foto e a descrição.
-     */
+    /** Mensagem 1.5 (FAV-8.1): etiqueta ilegível; valem foto e descrição. */
     public void setModuloIlegivel(String registroFotografico, String descricaoFisicaPlaca) {
         this.identificacaoIlegivel = true;
         this.registroFotografico = registroFotografico;
@@ -52,7 +37,7 @@ public class OrcamentoModulos extends Orcamento {
         this.modulo = mod;
     }
 
-    /** Polimorfismo: o segmento é o da subclasse (RN-03). */
+    /** RN-03: segmento da subclasse. */
     @Override
     public String getSegmentoPretendido() {
         return Segmento.MODULOS;

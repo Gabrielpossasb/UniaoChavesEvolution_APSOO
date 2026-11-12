@@ -1,14 +1,6 @@
 package uniaoevolutions.negocio;
 
-/**
- * Usuário do sistema: quem executa a Ordem de Serviço (associação "executada
- * por", 0..* OS para 1 Usuario).
- *
- * RASTREABILIDADE: a versão anterior do Diagrama de Classes tinha a hierarquia
- * Tecnico / TecnicoDeChaves / TecnicoDeModulos / Administrador. A versão
- * corrigida (01/10/2026), implementada aqui, usa uma única classe com o
- * atributo enumerado tipoUsuario, e o Mapeamento OR ficou só com TB_Usuario.
- */
+/** Usuário do sistema. O diagrama corrigido trocou a hierarquia de técnicos pelo atributo tipoUsuario. */
 public class Usuario {
 
     private int idUsuario;
@@ -24,10 +16,7 @@ public class Usuario {
         this.tipoUsuario = tipoUsuario;
     }
 
-    /**
-     * RN-04: só técnicos habilitados no segmento podem ser responsáveis. É
-     * regra de negócio, por isso mora aqui e não na tela nem na DAO.
-     */
+    /** RN-04: habilitado no segmento. */
     public boolean habilitadoEm(String segmento) {
         return tipoUsuario != null && tipoUsuario.habilitadoEm(segmento);
     }
@@ -56,7 +45,7 @@ public class Usuario {
         this.tipoUsuario = tipoUsuario;
     }
 
-    /** Rótulo "Nome - Tipo" da combo "Técnico responsável" do mockup. */
+    /** Rótulo "Nome - Tipo" da combo de técnicos. */
     @Override
     public String toString() {
         if (tipoUsuario == TipoUsuario.tecnicoDeModulos) {

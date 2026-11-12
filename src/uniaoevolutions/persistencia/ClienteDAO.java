@@ -10,15 +10,10 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * DAO da classe Cliente - tabela TB_Cliente.
- *
- * Operações do Diagrama de Classes v2: buscarPorCpfCnpj(cpfCnpj) e
- * salvar(cli). Nenhum método exibe mensagem: a SQLException sobe.
- */
+/** DAO de Cliente (TB_Cliente). */
 public class ClienteDAO {
 
-    /** Passo 2: cliente pelo CPF/CNPJ (só dígitos), ou null se não houver (FA-02). */
+    /** Passo 2: pelo CPF/CNPJ (só dígitos); null = FA-02. */
     public Cliente buscarPorCpfCnpj(String cpfCnpj) throws SQLException {
         String sql = "SELECT idCliente, nome, cpfCnpj, telefone FROM TB_Cliente WHERE cpfCnpj = ?";
         Connection conexao = Conexao.conectar();
@@ -32,7 +27,7 @@ public class ClienteDAO {
         }
     }
 
-    /** FA-02.3: grava o cliente e devolve no objeto o id gerado. */
+    /** FA-02.3; o objeto recebe o id gerado. */
     public void salvar(Cliente cli) throws SQLException {
         String sql = "INSERT INTO TB_Cliente (nome, cpfCnpj, telefone) VALUES (?, ?, ?)";
         Connection conexao = Conexao.conectar();
@@ -52,12 +47,7 @@ public class ClienteDAO {
         }
     }
 
-    /**
-     * ACRÉSCIMO à modelagem: o mockup diz "Busque por nome, CPF/CNPJ ou
-     * telefone", e o cliente do cadastro rápido (FA-02) não tem CPF/CNPJ.
-     * Telefone é comparado só pelos dígitos; nome, sem diferenciar
-     * maiúsculas, primeiro exato e depois por trecho.
-     */
+    /** ACRÉSCIMO: busca por nome ou telefone (mockup). Telefone pelos dígitos; nome exato, depois trecho. */
     public List<Cliente> buscarPorNomeOuTelefone(String termo) throws SQLException {
         String digitos = termo.replaceAll("\\D", "");
         String sql = "SELECT idCliente, nome, cpfCnpj, telefone FROM TB_Cliente "
@@ -73,11 +63,7 @@ public class ClienteDAO {
         return clientes;
     }
 
-    /**
-     * ACRÉSCIMO à modelagem: a lista de clientes da busca do mockup ("Busque
-     * por nome, CPF/CNPJ ou telefone"), para o Técnico só selecionar. Trecho
-     * vazio lista todos, em ordem de nome.
-     */
+    /** ACRÉSCIMO: lista da busca do mockup; trecho vazio lista todos, por nome. */
     public List<Cliente> buscarClientes(String trecho) throws SQLException {
         String texto = trecho == null ? "" : trecho.trim();
         String digitos = texto.replaceAll("\\D", "");
@@ -88,7 +74,7 @@ public class ClienteDAO {
         return consultar(sql, "%" + texto + "%", digitos, digitos + "%", "%" + digitos + "%");
     }
 
-    /** Telefone só com dígitos, com REPLACE (REGEXP_REPLACE não existe no MySQL 5.7). */
+    /** Telefone só com dígitos (REPLACE; o MySQL 5.7 não tem REGEXP_REPLACE). */
     private static final String TELEFONE_SO_DIGITOS =
             "REPLACE(REPLACE(REPLACE(REPLACE(telefone, '(', ''), ')', ''), '-', ''), ' ', '')";
 

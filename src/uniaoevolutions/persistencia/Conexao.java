@@ -4,13 +4,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-/**
- * Abre e fecha a conexão JDBC com o MySQL. É a única classe que sabe onde o
- * banco está.
- *
- * RNF-4 (rede local, sem nuvem): em produção, "localhost" vira o IP do
- * servidor da oficina.
- */
+/** Conexão JDBC com o MySQL. RNF-4: em produção, "localhost" vira o IP do servidor da oficina. */
 public class Conexao {
 
     private static final String URL = "jdbc:mysql://localhost:3306/uniao_evolutions";
@@ -21,7 +15,7 @@ public class Conexao {
         return DriverManager.getConnection(URL, USUARIO, SENHA);
     }
 
-    /** Fecha a conexão recebida, se existir. */
+    /** Fecha a conexão, se houver. */
     public static void desconectar(Connection conexao) throws SQLException {
         if (conexao != null) {
             conexao.close();

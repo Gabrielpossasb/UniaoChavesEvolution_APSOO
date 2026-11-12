@@ -72,18 +72,10 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 
 /**
- * Classe <<boundary>> TelaSolicitarOrcamento do Diagrama de Classes v2 e
- * objeto ":Interface" do DSS do Solicitar Orçamento.
- *
- * O layout é o do MOCKUP-solicitar-orcamento.pdf: a Tela 1 (formulário único,
- * V1 e V2), as janelas da Tela 2 (cadastros rápidos, confirmações e
- * resultado) e as validações da Tela 3.
- *
- * Validação: cada campo digitável é validado ao perder o foco e de novo,
- * com o formulário inteiro, ao clicar em "Registrar orçamento". Esta classe
- * só valida o FORMATO (com a Validacoes); as regras de negócio estão na
- * ControladoraSolicitarOrcamento, a única classe de outra camada que a tela
- * conhece. Sem SQL e sem DAO.
+ * <<boundary>> do Diagrama de Classes v2 e ":Interface" do DSS do Solicitar Orçamento.
+ * Layout: MOCKUP-solicitar-orcamento.pdf (Telas 1, 2 e 3).
+ * Valida só o formato dos campos (ao perder o foco e ao registrar); as regras de
+ * negócio ficam na ControladoraSolicitarOrcamento. Sem SQL e sem DAO.
  */
 public class TelaSolicitarOrcamento extends JFrame {
 
@@ -137,7 +129,7 @@ public class TelaSolicitarOrcamento extends JFrame {
 
     private final SimpleDateFormat formatoData = new SimpleDateFormat("dd/MM/yyyy");
 
-    /** Única classe de outra camada com que a tela conversa. */
+    /** Única classe de outra camada que a tela usa. */
     private final transient ControladoraSolicitarOrcamento controladora;
 
     // --- Estado da tela ----------------------------------------------
@@ -150,20 +142,16 @@ public class TelaSolicitarOrcamento extends JFrame {
     private boolean limiteChavesAtingido;
     private int proximoIdItem = 1;
     private double valorEstimado;
-    /**
-     * Ordem do DSS nas variantes: informarDiagnosticoPendente só depois dos
-     * dados do módulo, e informarComprovacaoPropriedade só depois dos dados
-     * das chaves. Ficam true quando a mensagem anterior já foi enviada.
-     */
+    /** Ordem do DSS nas variantes: true quando os dados do módulo/das chaves já foram enviados. */
     private boolean dadosModuloEnviados;
     private boolean dadosChavesEnviados;
-    /** Segmento aceito pela controladora (null = nenhum), para desfazer uma troca recusada. */
+    /** Último segmento aceito (null = nenhum); usado para desfazer uma troca recusada. */
     private String segmentoAceito;
     private String caminhoFoto;
     private final transient List<Object[]> itensTela = new ArrayList<>();
     private final transient List<Orcamento> historicoTecnico = new ArrayList<>();
     private final transient List<String> ordensDeServicoDoVeiculo = new ArrayList<>();
-    /** Impede que o preenchimento automático dispare os eventos de troca. */
+    /** true durante preenchimento automático: os eventos de troca são ignorados. */
     private boolean carregando;
 
     // --- Validação ---------------------------------------------------
@@ -214,7 +202,7 @@ public class TelaSolicitarOrcamento extends JFrame {
     // V1 - Módulos
     private final JComboBox<String> comboTipoModulo = criarComboEditavel("comboTipoModulo", TIPOS_MODULO, "Selecione…");
     private final JComboBox<String> comboModeloECU = criarComboEditavel("comboModeloECU", MODELOS_ECU, "Selecione…");
-    /** Editável: aceita digitar, e lista os módulos já registrados do veículo para selecionar. */
+    /** Editável; lista os módulos já registrados do veículo. */
     private final JComboBox<String> comboIdentificacaoModulo =
             criarComboEditavel("comboIdentificacaoModulo", new String[0], "");
     private final transient List<ModuloECU> modulosDoVeiculo = new ArrayList<>();
@@ -311,14 +299,11 @@ public class TelaSolicitarOrcamento extends JFrame {
     private Campo cValorProposto;
     private Campo cObservacoes;
 
-    /**
-     * @param idUsuarioLogado usuário que está atendendo (PRE-01 e mensagem
-     *                        1.1 "buscarUsuario(idUsuarioLogado)").
-     */
+    /** @param idUsuarioLogado usuário do atendimento (PRE-01; mensagem 1.1). */
     public TelaSolicitarOrcamento(int idUsuarioLogado) {
         super("União Evolutions - Solicitar Orçamento");
         this.controladora = new ControladoraSolicitarOrcamento(idUsuarioLogado);
-        // O "X" da janela não fecha: só o botão "Voltar / Desistir" (FA-00).
+        // O "X" não fecha; só "Voltar / Desistir" (FA-00).
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         java.awt.Dimension tela = java.awt.Toolkit.getDefaultToolkit().getScreenSize();
         setSize(Math.min(1400, tela.width), Math.min(920, tela.height - 40));
@@ -327,8 +312,7 @@ public class TelaSolicitarOrcamento extends JFrame {
         registrarValidacoes();
         restringirDigitacao();
         ligarEventos();
-        // O passo 1 acessa o banco: é agendado para depois de a janela
-        // aparecer, para que um erro saia sobre a tela já montada.
+        // Passo 1 depois de a janela aparecer: um erro de banco sai sobre a tela montada.
         SwingUtilities.invokeLater(this::iniciarOrcamento);
     }
 
@@ -541,7 +525,7 @@ public class TelaSolicitarOrcamento extends JFrame {
         painelCartoes.add(criarBlocoModulos(), CARTAO_MODULOS);
         painelCartoes.add(criarBlocoChaves(), CARTAO_CHAVES);
         secaoDadosTecnicos.add(painelCartoes);
-        // Passo 7: o bloco só aparece depois que o segmento é informado.
+        // Passo 7: o bloco aparece após o segmento ser informado.
         secaoDadosTecnicos.setVisible(false);
         return secaoDadosTecnicos;
     }
@@ -656,8 +640,8 @@ public class TelaSolicitarOrcamento extends JFrame {
                 criarCampo("Telecomando", false, telecomando, ""), cTransponder.painel(false),
                 cSituacao.painel(true)}, new double[]{1.05, 0.6, 0.75, 0.95, 1.05}));
 
-        checkPerdaTotal.setText("<html><b>Perda total das chaves</b> &nbsp;— o cliente não possui nenhuma "
-                + "chave funcional do veículo</html>");
+        checkPerdaTotal.setText("<html><b>Perda total das chaves</b> &nbsp;(o cliente não possui nenhuma "
+                + "chave funcional do veículo)</html>");
         checkPerdaTotal.setAlignmentX(LEFT_ALIGNMENT);
         bloco.add(checkPerdaTotal);
         bloco.add(Box.createVerticalStrut(6));
@@ -853,10 +837,7 @@ public class TelaSolicitarOrcamento extends JFrame {
     // Validações (Tela 3 do mockup)
     // =================================================================
 
-    /**
-     * Registra a regra de formato de cada campo. Cada uma roda ao perder o
-     * foco e de novo em "Registrar orçamento" (validarFormulario).
-     */
+    /** Regras de formato dos campos: rodam ao perder o foco e em validarFormulario. */
     private void registrarValidacoes() {
         cValidade.regra(envio -> {
             Date data = Validacoes.converterData(campoValidade.getText());
@@ -902,8 +883,7 @@ public class TelaSolicitarOrcamento extends JFrame {
             if (quantidade == null) {
                 return Validacoes.MSG_QUANTIDADE_INVALIDA;
             }
-            // FAV-8.4B: o limite deixa de bloquear se o Técnico optou por
-            // apagar as chaves existentes (FAV-8.4B.2).
+            // FAV-8.4B.2: "Apagar chaves existentes" libera o limite.
             return quantidade > ControladoraSolicitarOrcamento.QUANTIDADE_MAXIMA_CHAVES
                     && !checkApagarChaves.isSelected() ? ControladoraSolicitarOrcamento.MSG_LIMITE_CHAVES : null;
         });
@@ -916,9 +896,7 @@ public class TelaSolicitarOrcamento extends JFrame {
         cDocumentoSolicitante.quando(perda)
                 .regra(envio -> Validacoes.validarObrigatorio(campoDocumentoSolicitante.getText()));
 
-        // Os dois campos de inclusão só são obrigatórios para incluir um
-        // serviço (botão "+ Incluir serviço"); no registro, só se o Técnico
-        // deixou um serviço escolhido sem incluí-lo.
+        // Serviço e valor só são cobrados ao incluir; no registro, só se há serviço escolhido sem incluir.
         cServico.regra(envio -> null);
         cValorProposto.regra(envio -> {
             String textoValor = campoValorProposto.getText().trim();
@@ -940,9 +918,9 @@ public class TelaSolicitarOrcamento extends JFrame {
     }
 
     private void ligarEventos() {
-        // (a) validação ao perder o foco, seguida da mensagem ao Sistema.
+        // (a) ao perder o foco: valida e envia a mensagem ao Sistema.
         aoPerderFoco(campoValidade, () -> {
-            // ACRÉSCIMO (rodada 6): a data digitada sem barras ganha as barras.
+            // ACRÉSCIMO (rodada 6): ddmmaaaa vira dd/mm/aaaa.
             Date data = Validacoes.converterData(campoValidade.getText());
             if (data != null) {
                 campoValidade.setText(formatoData.format(data));
@@ -976,8 +954,7 @@ public class TelaSolicitarOrcamento extends JFrame {
             cSintoma.validar();
             enviarDadosModulo();
         });
-        // ACRÉSCIMO (rodada 6): os atendimentos anteriores aparecem assim que
-        // os dados do módulo ficam completos, sem precisar sair do campo.
+        // ACRÉSCIMO (rodada 6): envia os dados do módulo ao parar de digitar.
         enviarAoDigitar(campoSintoma, this::enviarDadosModulo);
         checkIlegivel.addActionListener(e -> aoMarcarIlegivel());
         checkBancada.addActionListener(e -> aoMarcarBancada());
@@ -1066,7 +1043,7 @@ public class TelaSolicitarOrcamento extends JFrame {
     /** Passos 2 e 3 (DSS 2 e 3): origem + identificação -> dados do cliente e veículos. */
     private void aoInformarCliente() {
         if (popupClientes.isVisible()) {
-            return;   // o Técnico está escolhendo na lista
+            return;   // escolha em andamento na lista
         }
         if (carregando || cCliente.validar() != null) {
             return;
@@ -1075,7 +1052,7 @@ public class TelaSolicitarOrcamento extends JFrame {
         String origem = origemSelecionada();
         String chave = origem + "|" + termo;
         if (chave.equals(chaveBuscaCliente)) {
-            return;   // mesma busca já feita: não consulta de novo a cada foco
+            return;   // mesma busca: não consulta de novo
         }
         if (origem == null) {
             cOrigem.validar();
@@ -1222,10 +1199,7 @@ public class TelaSolicitarOrcamento extends JFrame {
         }
     }
 
-    /**
-     * O cliente escolhido na lista é identificado pela mensagem do DSS
-     * (informarCliente), pelo CPF/CNPJ - ou pelo telefone, se não tiver.
-     */
+    /** Cliente escolhido na lista: envia informarCliente com o CPF/CNPJ (ou o telefone). */
     void escolherCliente(Cliente cliente) {
         popupClientes.setVisible(false);
         carregando = true;
@@ -1256,10 +1230,7 @@ public class TelaSolicitarOrcamento extends JFrame {
         carregando = false;
     }
 
-    /**
-     * Escolhido um módulo já registrado do veículo, tipo e modelo vêm junto;
-     * depois os dados seguem para o Sistema (informarDadosModulo, DSS 9).
-     */
+    /** Módulo já registrado escolhido: preenche tipo e modelo e envia informarDadosModulo (DSS 9). */
     private void aoEscolherIdentificacao() {
         String identificacao = texto(comboIdentificacaoModulo);
         for (ModuloECU modulo : modulosDoVeiculo) {
@@ -1278,7 +1249,7 @@ public class TelaSolicitarOrcamento extends JFrame {
         enviarDadosModulo();
     }
 
-    /** A origem faz parte da mensagem informarCliente: muda a origem, reenvia. */
+    /** A origem faz parte de informarCliente: ao mudar, reenvia. */
     private void aoTrocarOrigem() {
         cOrigem.limpar();
         if (!campoCliente.getText().trim().isEmpty()) {
@@ -1381,11 +1352,9 @@ public class TelaSolicitarOrcamento extends JFrame {
     }
 
     /**
-     * Passo 5: o histórico técnico de atendimentos anteriores (orçamentos do
-     * veículo), com as Ordens de Serviço abaixo. As linhas dos orçamentos têm o
-     * mesmo texto das de "Atendimentos anteriores deste módulo" (passo 8.2),
-     * mais o segmento e o módulo. Um JLabel por linha (sem HTML): o tamanho
-     * calculado é o desenhado, e nada sai cortado.
+     * Passo 5: histórico técnico (orçamentos do veículo, depois as OS). Linhas
+     * iguais às do passo 8.2, mais segmento e módulo. Um JLabel por linha, sem HTML,
+     * para nada sair cortado.
      */
     private void verHistoricoTecnico() {
         if (veiculoAtual == null || (historicoTecnico.isEmpty() && ordensDeServicoDoVeiculo.isEmpty())) {
@@ -1427,7 +1396,7 @@ public class TelaSolicitarOrcamento extends JFrame {
     private static String descreverSegmento(Orcamento orcamento) {
         String segmento = orcamento.getSegmentoPretendido();
         if (Segmento.MODULOS.equals(segmento)) {
-            // A OrcamentoDAO leva o módulo do orçamento para o Veiculo (compatível com a 1ª iteração).
+            // O módulo do orçamento vem no Veiculo (OrcamentoDAO, compatível com a 1ª iteração).
             String id = orcamento.getVeiculo() == null ? null : orcamento.getVeiculo().getIdentificacaoModulo();
             return segmento + (id == null || id.isEmpty() ? " (etiqueta ilegível)" : " " + id);
         }
@@ -1462,8 +1431,7 @@ public class TelaSolicitarOrcamento extends JFrame {
             rotuloCategoriaServicos.setText("Somente serviços base da categoria " + segmento + ".");
             enviarDadosDoBloco();
         } catch (IllegalArgumentException erro) {
-            // Recusado (sem veículo, ou com serviços de outro segmento
-            // incluídos): volta exatamente à seleção anterior, que pode ser nenhuma.
+            // Recusado: volta à seleção anterior (ou a nenhuma).
             carregando = true;
             if (Segmento.MODULOS.equals(segmentoAceito)) {
                 radioModulos.setSelected(true);
@@ -1494,10 +1462,8 @@ public class TelaSolicitarOrcamento extends JFrame {
     // -----------------------------------------------------------------
 
     /**
-     * Passo 8.1: com os campos da RN-04 preenchidos, envia os dados do módulo
-     * (DSS 9) e exibe os atendimentos anteriores (passo 8.2). Com a etiqueta
-     * ilegível, envia informarIdentificacaoIlegivel e informarDescricaoModulo
-     * (DSS variantes 2 e 4).
+     * Passo 8.1: com os campos da RN-04 completos, envia informarDadosModulo (DSS 9) e
+     * exibe os atendimentos (8.2). Etiqueta ilegível: DSS variantes 2 e 4.
      */
     private void enviarDadosModulo() {
         if (carregando || !Segmento.MODULOS.equals(segmentoSelecionado())) {
@@ -1521,7 +1487,7 @@ public class TelaSolicitarOrcamento extends JFrame {
                         identificacao, campoSintoma.getText()), identificacao);
                 dadosModuloEnviados = true;
             }
-            // DSS variantes 6 (FAV-8.2): só depois dos dados do módulo (passo 8.2 após o 8.1).
+            // DSS variantes 6 (FAV-8.2): só depois dos dados do módulo.
             if (dadosModuloEnviados && checkBancada.isSelected()) {
                 controladora.informarDiagnosticoPendente();
             }
@@ -1546,7 +1512,7 @@ public class TelaSolicitarOrcamento extends JFrame {
         caixaAtendimentos.setText(texto.append("</html>").toString());
     }
 
-    /** FAV-8.1: etiqueta ilegível - modelo e identificação dispensados, foto e descrição exigidas. */
+    /** FAV-8.1: dispensa modelo e identificação; exige foto e descrição. */
     private void aoMarcarIlegivel() {
         boolean ilegivel = checkIlegivel.isSelected();
         cartaoModelo.show(painelModelo, ilegivel ? "dispensado" : "editavel");
@@ -1576,8 +1542,7 @@ public class TelaSolicitarOrcamento extends JFrame {
         alertaBancada.setVisible(pendente);
         revalidate();
         if (pendente) {
-            // Se os dados do módulo ainda não foram enviados, a mensagem sai
-            // logo depois deles, em enviarDadosModulo (ordem do DSS).
+            // Sem os dados do módulo, a mensagem sai depois deles, em enviarDadosModulo.
             if (dadosModuloEnviados) {
                 try {
                     controladora.informarDiagnosticoPendente();
@@ -1623,10 +1588,8 @@ public class TelaSolicitarOrcamento extends JFrame {
     // -----------------------------------------------------------------
 
     /**
-     * Passo 8.4 (DSS 11 / variantes 13 e 15): com os campos da RN-04
-     * preenchidos, envia os dados das chaves. O retorno é a exigência de
-     * comprovação de propriedade (passo 8.5) ou o limite do imobilizador
-     * (FAV-8.4B).
+     * Passo 8.4 (DSS 11; variantes 13 e 15): envia os dados das chaves. Retorno: exigência
+     * de comprovação (8.5) ou limite do imobilizador (FAV-8.4B).
      */
     private void enviarDadosChaves() {
         if (carregando || !Segmento.CHAVES.equals(segmentoSelecionado())) {
@@ -1650,7 +1613,7 @@ public class TelaSolicitarOrcamento extends JFrame {
                 cQuantidade.limpar();
                 alertaComprovacao.setVisible(true);         // passo 8.5
             }
-            // FAV-8.4A: a comprovação vem depois dos dados das chaves (passo 8.4).
+            // FAV-8.4A: comprovação depois dos dados das chaves.
             if (checkPerdaTotal.isSelected()) {
                 enviarComprovacao(true);
             }
@@ -1660,7 +1623,7 @@ public class TelaSolicitarOrcamento extends JFrame {
         }
     }
 
-    /** FAV-8.4A.1 e FAV-8.4A.2: perda total exige documento e solicitante. */
+    /** FAV-8.4A.1-2: perda total exige documento e solicitante. */
     private void aoMarcarPerdaTotal() {
         boolean perda = checkPerdaTotal.isSelected();
         linhaDocumentos.setVisible(perda);
@@ -1681,15 +1644,13 @@ public class TelaSolicitarOrcamento extends JFrame {
     }
 
     /**
-     * FAV-8.4A.3 e FAV-8.4A.4 (DSS variantes 8 e 9): com os três documentos,
-     * informa a comprovação; o procedimento de apagamento e regravação é
-     * acrescentado à relação de serviços a orçar e o Técnico informa o valor
-     * proposto (FAV-8.4A.5).
+     * FAV-8.4A.3-5 (DSS variantes 8 e 9): com os três documentos, envia a comprovação e
+     * acrescenta o procedimento de apagamento e regravação para o Técnico dar o valor.
      */
     private void enviarComprovacao(boolean destacar) {
         if (!dadosChavesEnviados || !checkPerdaTotal.isSelected() || !cDocumentoPropriedade.valido()
                 || !cNomeSolicitante.valido() || !cDocumentoSolicitante.valido()) {
-            return;   // DSS: informarDadosChaves (com a perda total) vem antes
+            return;   // DSS: informarDadosChaves vem antes
         }
         try {
             ServicoBase servico = controladora.informarComprovacaoPropriedade(campoDocumentoPropriedade.getText(),
@@ -1711,11 +1672,7 @@ public class TelaSolicitarOrcamento extends JFrame {
         }
     }
 
-    /**
-     * Desmarcar uma das opções das variantes não tem mensagem própria no DSS:
-     * a tela reenvia o segmento (que zera os dados técnicos na controladora) e
-     * os dados do bloco como estão agora.
-     */
+    /** Desmarcar opção de variante (sem mensagem no DSS): reenvia o segmento e os dados do bloco. */
     private void reenviarDadosTecnicos() {
         String segmento = segmentoSelecionado();
         if (segmento == null) {
@@ -1733,7 +1690,7 @@ public class TelaSolicitarOrcamento extends JFrame {
         }
     }
 
-    /** Envia ao Sistema o que já estiver preenchido no bloco do segmento. */
+    /** Envia o que já estiver preenchido no bloco do segmento. */
     private void enviarDadosDoBloco() {
         if (Segmento.MODULOS.equals(segmentoSelecionado())) {
             enviarDadosModulo();
@@ -1746,7 +1703,7 @@ public class TelaSolicitarOrcamento extends JFrame {
     // Serviços (passos 9 a 11, FA-09A, FA-09B, FA-11A, FA-11B)
     // -----------------------------------------------------------------
 
-    /** Passos 9 e 10 (DSS 12 e 13): inclui o serviço e exibe o valor estimado. */
+    /** Passos 9 e 10 (DSS 12 e 13). */
     private void incluirServico() {
         ServicoBase servico = (ServicoBase) comboServico.getSelectedItem();
         boolean ok = true;
@@ -1885,10 +1842,7 @@ public class TelaSolicitarOrcamento extends JFrame {
     // Passos 12 e 13: registrar
     // -----------------------------------------------------------------
 
-    /**
-     * Passo 12 (DSS 14 e 15): revalida o formulário inteiro e, sem
-     * pendências, pede o registro. Passo 13: mensagem de sucesso.
-     */
+    /** Passo 12 (DSS 14 e 15): revalida tudo e registra. Passo 13: sucesso. */
     private void registrar() {
         if (!validarFormulario()) {
             return;
@@ -1915,11 +1869,7 @@ public class TelaSolicitarOrcamento extends JFrame {
         }
     }
 
-    /**
-     * Momento (b) da validação: todos os campos aplicáveis, de uma vez.
-     * FA-12B lista as pendências; FA-12C fica no "Válido até"; FA-12A abaixo
-     * da tabela de serviços.
-     */
+    /** Validação (b): todos os campos. FA-12B na caixa, FA-12C no "Válido até", FA-12A sob a tabela. */
     private boolean validarFormulario() {
         List<String> pendencias = new ArrayList<>();
         JComponent primeiro = null;
@@ -2066,7 +2016,7 @@ public class TelaSolicitarOrcamento extends JFrame {
             corpo.setFont(corpo.getFont().deriveFont(Font.PLAIN, 13f));
             mostrarDialogo(Icone.CONFIRMADO, ControladoraSolicitarOrcamento.MSG_RASCUNHO, corpo,
                     new String[]{"Ir para a lista de orçamentos"}, 0, -1, null);
-            // FA-12D.3: o caso de uso é encerrado; a lista é a da FA-00.4.
+            // FA-12D.3: encerra; mostra a lista do FA-00.4.
             mostrarListaOrcamentos(controladora.descartarOrcamento(), null);
             iniciarOrcamento();
         } catch (IllegalArgumentException erro) {
@@ -2076,11 +2026,7 @@ public class TelaSolicitarOrcamento extends JFrame {
         }
     }
 
-    /**
-     * FA-00 (DSS alternativo 17 a 21): desistência com confirmação. É a única
-     * forma de fechar a tela (o "X" da janela não fecha): confirmada, exibe a
-     * lista de orçamentos e encerra o caso de uso (FA-00.5).
-     */
+    /** FA-00 (DSS alternativo 17 a 21): única forma de fechar a tela; confirmada, mostra a lista e fecha. */
     private void desistir() {
         JLabel corpo = new JLabel("<html>Os dados informados serão descartados e o orçamento <b>não</b> será "
                 + "registrado.</html>");
@@ -2111,7 +2057,7 @@ public class TelaSolicitarOrcamento extends JFrame {
             }
         };
         for (Orcamento o : orcamentos) {
-            modelo.addRow(new Object[]{o.getNumero() == null ? "—" : o.getNumero(),
+            modelo.addRow(new Object[]{o.getNumero() == null ? "-" : o.getNumero(),
                     o.getDataSolicitacao() == null ? "-" : formatoData.format(o.getDataSolicitacao()),
                     o.getCliente().getNome(), o.getVeiculo().getPlaca(), o.getSegmentoPretendido(),
                     Validacoes.formatarMoeda(o.getValorEstimado()), o.getStatus()});
@@ -2139,8 +2085,7 @@ public class TelaSolicitarOrcamento extends JFrame {
 
     /** FA-02 (DSS alternativo 3 e 4): "Cliente não cadastrado". */
     private void cadastrarCliente() {
-        // DSS: informarCliente (origem + identificação) vem antes de
-        // cadastrarCliente; é ela que guarda a origem do atendimento.
+        // DSS: informarCliente (que guarda a origem) vem antes de cadastrarCliente.
         if (origemSelecionada() == null) {
             cOrigem.validar();
             return;
@@ -2152,7 +2097,7 @@ public class TelaSolicitarOrcamento extends JFrame {
         aoInformarCliente();
         if (clienteAtual != null || cCliente.mensagemAtual() != null
                 && !cCliente.mensagemAtual().startsWith("Cliente não encontrado")) {
-            return;   // já tem cadastro, ou o texto buscado é inválido
+            return;   // já cadastrado ou busca inválida
         }
         CampoTexto nome = new CampoTexto("campoNomeCliente", "");
         CampoTexto telefone = new CampoTexto("campoTelefoneCliente", "");
@@ -2163,7 +2108,7 @@ public class TelaSolicitarOrcamento extends JFrame {
         cTelefone.regra(envio -> Validacoes.validarTelefone(telefone.getText()));
         aoPerderFoco(nome, cNome::validar);
         aoPerderFoco(telefone, cTelefone::validar);
-        // O texto buscado vira o ponto de partida do cadastro.
+        // Pré-preenche com o texto buscado.
         String buscado = campoCliente.getText().trim();
         if (!buscado.isEmpty() && Validacoes.validarTelefone(buscado) == null) {
             telefone.setText(Validacoes.formatarTelefone(buscado));
@@ -2203,7 +2148,7 @@ public class TelaSolicitarOrcamento extends JFrame {
                     }
                 });
         if (escolha == 1) {
-            // FA-02.4 e FA-02.5: sem veículos vinculados, segue para o FA-04.
+            // FA-02.4-5: sem veículos, segue para o FA-04.
             cadastrarVeiculo();
         }
     }
@@ -2503,8 +2448,7 @@ public class TelaSolicitarOrcamento extends JFrame {
         cartao.add(meio, BorderLayout.CENTER);
         cartao.add(rodape, BorderLayout.SOUTH);
         dialogo.setContentPane(cartao);
-        // setResizable antes do pack: depois dele, alguns gerenciadores de
-        // janela do Linux trocam a moldura e cortam o conteúdo (rodada 6).
+        // setResizable antes do pack: depois dele, alguns gerenciadores Linux cortam o conteúdo (rodada 6).
         dialogo.setResizable(false);
         dialogo.pack();
         dialogo.setMinimumSize(new Dimension(Math.max(560, dialogo.getWidth()), dialogo.getHeight()));
@@ -2591,7 +2535,7 @@ public class TelaSolicitarOrcamento extends JFrame {
         JLabel label = new JLabel(obrigatorio ? rotuloComAsterisco(rotulo) : rotulo);
         label.setFont(label.getFont().deriveFont(Font.BOLD, 11f));
         label.setForeground(CINZA_ROTULO);
-        // Botões mantêm a largura do texto; campos dividem a largura da linha.
+        // Botões ficam na largura do texto; campos dividem a linha.
         componente.setPreferredSize(new Dimension(componente instanceof AbstractButton
                 ? componente.getPreferredSize().width : 10, 36));
         componente.setMinimumSize(componente.getPreferredSize());
@@ -2637,7 +2581,7 @@ public class TelaSolicitarOrcamento extends JFrame {
     }
 
     private static JTextField criarCampoSomenteLeitura(String nome) {
-        // Campo estreito mostra o começo do texto, não o fim.
+        // Mostra o começo do texto.
         JTextField campo = new JTextField() {
             private static final long serialVersionUID = 1L;
 
@@ -2777,11 +2721,7 @@ public class TelaSolicitarOrcamento extends JFrame {
         restringir(editor(comboVeiculo), SO_PLACA, 8, true);
     }
 
-    /**
-     * O campo descarta, ao digitar ou colar, todo caractere fora do padrão,
-     * e não passa do tamanho máximo. A validação de formato continua valendo
-     * (ex.: 31/02/2027 só tem caracteres permitidos, mas não existe).
-     */
+    /** Descarta, ao digitar ou colar, caracteres fora do padrão e o que passar do máximo. */
     private static void restringir(javax.swing.text.JTextComponent campo, String permitido, int maximo,
                                    boolean maiusculas) {
         ((javax.swing.text.AbstractDocument) campo.getDocument()).setDocumentFilter(
@@ -2819,11 +2759,7 @@ public class TelaSolicitarOrcamento extends JFrame {
                 });
     }
 
-    /**
-     * ACRÉSCIMO (rodada 6): roda a ação quando o usuário para de digitar por
-     * um instante, para não mandar uma mensagem ao Sistema a cada tecla. A
-     * ação é a mesma do "perder o foco" e só envia com os campos completos.
-     */
+    /** ACRÉSCIMO (rodada 6): roda a ação 600 ms depois da última tecla. */
     private void enviarAoDigitar(javax.swing.text.JTextComponent campo, Runnable acao) {
         javax.swing.Timer espera = new javax.swing.Timer(600, e -> {
             if (campo.isShowing() && !campo.getText().trim().isEmpty()) {
@@ -2848,12 +2784,12 @@ public class TelaSolicitarOrcamento extends JFrame {
 
             @Override
             public void changedUpdate(javax.swing.event.DocumentEvent e) {
-                // atributos de estilo: não muda o texto
+                // só estilo; o texto não muda
             }
         });
     }
 
-    /** ACRÉSCIMO (rodada 6): exemplo do formato, com e sem barras (hoje + 15 dias). */
+    /** ACRÉSCIMO (rodada 6): exemplo de data (hoje + 15 dias), com e sem barras. */
     private String exemploDeData() {
         java.util.Calendar c = java.util.Calendar.getInstance();
         c.add(java.util.Calendar.DAY_OF_MONTH, 15);
@@ -2891,10 +2827,7 @@ public class TelaSolicitarOrcamento extends JFrame {
     // Classes internas de apoio visual
     // =================================================================
 
-    /**
-     * Um campo com validação: componente, rótulo, dica e a regra. Ao errar,
-     * a borda fica vermelha e a dica dá lugar à mensagem (Tela 3).
-     */
+    /** Campo com validação: com erro, borda vermelha e mensagem no lugar da dica (Tela 3). */
     private final class Campo {
         private final String rotulo;
         private final JComponent painelComponente;
@@ -2926,7 +2859,7 @@ public class TelaSolicitarOrcamento extends JFrame {
             return this;
         }
 
-        /** Campo exigido pela RN-04: a pendência cita o segmento (texto da Tela 3). */
+        /** RN-04: a pendência cita o segmento (Tela 3). */
         Campo doSegmento(String segmento) {
             this.segmentoRegra = segmento;
             return this;
@@ -2971,7 +2904,7 @@ public class TelaSolicitarOrcamento extends JFrame {
             dica.setText(textoDica.isEmpty() ? " " : "<html>" + textoDica + "</html>");
         }
 
-        /** O componente que ganha a borda vermelha. */
+        /** Componente que recebe a borda vermelha. */
         private JComponent alvoBorda() {
             return componente == campoCliente ? painelCliente : componente;
         }
@@ -2982,7 +2915,7 @@ public class TelaSolicitarOrcamento extends JFrame {
             aparenciaGuardada = true;
         }
 
-        /** Validação do momento (a): ao perder o foco. */
+        /** Validação (a): ao perder o foco. */
         String validar() {
             return validar(false);
         }
@@ -3001,7 +2934,7 @@ public class TelaSolicitarOrcamento extends JFrame {
             return erro;
         }
 
-        /** Verifica sem mudar a aparência (para decidir se já dá para enviar). */
+        /** Verifica sem marcar o campo. */
         boolean valido() {
             return !aplicavel.getAsBoolean() || regra.apply(false) == null;
         }
@@ -3060,10 +2993,7 @@ public class TelaSolicitarOrcamento extends JFrame {
         }
     }
 
-    /**
-     * Texto HTML que quebra linha na largura que recebe (dicas, alertas e
-     * mensagens de erro do mockup), sem alargar a coluna do formulário.
-     */
+    /** Texto HTML que quebra linha na largura recebida, sem alargar a coluna. */
     private static final class TextoQuebravel extends JLabel {
         private static final long serialVersionUID = 1L;
 
@@ -3100,10 +3030,7 @@ public class TelaSolicitarOrcamento extends JFrame {
         }
     }
 
-    /**
-     * O formulário acompanha a largura da janela (como o mockup): as linhas
-     * se distribuem na largura disponível e só há rolagem vertical.
-     */
+    /** Formulário na largura da janela: só rolagem vertical. */
     private static class PainelLarguraDaJanela extends JPanel implements javax.swing.Scrollable {
         private static final long serialVersionUID = 1L;
 
@@ -3231,7 +3158,7 @@ public class TelaSolicitarOrcamento extends JFrame {
         }
     }
 
-    /** Ícone redondo com um símbolo, desenhado (não depende de fonte). */
+    /** Ícone redondo com símbolo, desenhado (sem depender de fonte). */
     private static final class IconeCirculo implements Icon {
         private final char simbolo;
         private final Color cor;
@@ -3316,7 +3243,7 @@ public class TelaSolicitarOrcamento extends JFrame {
     }
 
     // =================================================================
-    // Consultas usadas pelos testes de interface (sem efeito no fluxo)
+    // Consultas para os testes de interface
     // =================================================================
 
     /** Mensagem exibida sob o campo de rótulo informado, ou null. */
