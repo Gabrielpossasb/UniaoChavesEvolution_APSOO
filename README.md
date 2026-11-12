@@ -20,25 +20,6 @@ e implementa dois casos de uso: Registrar Ordem de Serviço (1ª iteração) e S
 Não há login porque autenticação não é caso de uso do escopo: o usuário é escolhido num menu. O banco
 roda na rede local da oficina, sem nuvem (requisito RNF-4).
 
-## Decisões técnicas
-
-- **Herança no banco como "uma tabela por subclasse".** `Orcamento` e `OrdemDeServico` têm uma subclasse
-  por segmento, e cada uma virou uma tabela própria com a chave da superclasse (`TB_Orcamento` +
-  `TB_OrcamentoModulos` / `TB_OrcamentoChaves`). Evita colunas nulas do outro segmento, ao custo de
-  gravar com vários `INSERT`.
-- **Gravação tudo ou nada, com o objeto restaurado.** `OrcamentoDAO.gravar` insere módulo novo,
-  superclasse, subclasse e itens numa transação. Se falhar, desfaz e zera os ids gerados no objeto,
-  para que a nova tentativa do usuário grave tudo de novo sem duplicar nada.
-- **O código segue a ordem do diagrama de comunicação.** `ControladoraSolicitarOrcamento.registrarOrcamento`
-  executa as mensagens 1.1 a 1.15.3 na ordem do diagrama, numeradas nos comentários, e os nomes de
-  classes e métodos são os do diagrama de classes. Dá para conferir modelo e código lado a lado.
-- **Formato na tela, regra no domínio.** A tela valida o formato de cada campo ao perder o foco e de novo
-  ao registrar (`Validacoes`, com `DocumentFilter` bloqueando letras em campos numéricos). As regras de
-  negócio ficam na controladora e nas entidades, que lançam `IllegalArgumentException` com o texto da
-  mensagem: a controladora nunca abre janela.
-- **`status` do orçamento como `VARCHAR`, não `ENUM`.** As duas iterações usam vocabulários diferentes
-  ("Aprovado pelo cliente" na 1ª, "Em análise" e "Rascunho" na 2ª). Um `ENUM` quebraria a 1ª iteração.
-
 ## Stack
 
 | Função | Tecnologia |
