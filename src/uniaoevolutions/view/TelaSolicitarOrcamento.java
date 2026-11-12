@@ -62,8 +62,6 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.io.File;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
@@ -320,6 +318,7 @@ public class TelaSolicitarOrcamento extends JFrame {
     public TelaSolicitarOrcamento(int idUsuarioLogado) {
         super("União Evolutions - Solicitar Orçamento");
         this.controladora = new ControladoraSolicitarOrcamento(idUsuarioLogado);
+        // O "X" da janela não fecha: só o botão "Voltar / Desistir" (FA-00).
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         java.awt.Dimension tela = java.awt.Toolkit.getDefaultToolkit().getScreenSize();
         setSize(Math.min(1400, tela.width), Math.min(920, tela.height - 40));
@@ -941,13 +940,6 @@ public class TelaSolicitarOrcamento extends JFrame {
     }
 
     private void ligarEventos() {
-        addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent evento) {
-                desistir(true);
-            }
-        });
-
         // (a) validação ao perder o foco, seguida da mensagem ao Sistema.
         aoPerderFoco(campoValidade, () -> {
             // ACRÉSCIMO (rodada 6): a data digitada sem barras ganha as barras.
@@ -1038,7 +1030,7 @@ public class TelaSolicitarOrcamento extends JFrame {
         aoPerderFoco(campoObservacoes, cObservacoes::validar);
 
         // Rodapé
-        botaoDesistir.addActionListener(e -> desistir(false));
+        botaoDesistir.addActionListener(e -> desistir());
         botaoRascunho.addActionListener(e -> salvarRascunho());
         botaoRegistrar.addActionListener(e -> registrar());
     }
@@ -2085,13 +2077,11 @@ public class TelaSolicitarOrcamento extends JFrame {
     }
 
     /**
-     * FA-00 (DSS alternativo 17 a 21): desistência com confirmação.
-     *
-     * @param fecharJanela true quando veio do "X" da janela: depois de
-     *                     desistir, a aplicação é fechada em vez de abrir um
-     *                     novo orçamento.
+     * FA-00 (DSS alternativo 17 a 21): desistência com confirmação. É a única
+     * forma de fechar a tela (o "X" da janela não fecha): confirmada, exibe a
+     * lista de orçamentos e encerra o caso de uso (FA-00.5).
      */
-    private void desistir(boolean fecharJanela) {
+    private void desistir() {
         JLabel corpo = new JLabel("<html>Os dados informados serão descartados e o orçamento <b>não</b> será "
                 + "registrado.</html>");
         corpo.setFont(corpo.getFont().deriveFont(Font.PLAIN, 13f));
@@ -2106,11 +2096,7 @@ public class TelaSolicitarOrcamento extends JFrame {
         } catch (SQLException erro) {
             mostrarErroDeBanco(erro);
         }
-        if (fecharJanela) {
-            dispose();
-        } else {
-            iniciarOrcamento();
-        }
+        dispose();
     }
 
     /** FA-00.4 / FA-12D: a listagem de orçamentos. */

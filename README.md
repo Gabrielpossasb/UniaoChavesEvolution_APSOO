@@ -128,8 +128,10 @@ java -cp "bin:lib/mysql-connector-j-8.4.0.jar" uniaoevolutions.MenuPrincipal
 
 2. Clique em **Solicitar Orçamento** ou em **Registrar Ordem de Serviço**. O menu some enquanto a tela
    está aberta e volta quando ela é fechada:
-   - no Solicitar Orçamento, pelo **Desistir** ou pelo "X" da janela;
-   - no Registrar OS, pelo **Voltar / Cancelar**. O "X" dessa janela não fecha nada.
+   - no Solicitar Orçamento, pelo **Voltar / Desistir**;
+   - no Registrar OS, pelo **Voltar / Cancelar**.
+
+   O "X" das duas janelas não fecha nada, de propósito.
 3. O menu informa se o banco conectou. Se a conexão falhar, ele mostra a causa provável e a mensagem do
    banco, e tem o botão **Tentar conectar de novo**.
 
@@ -185,7 +187,7 @@ registrar-ordem-servico/
 ├── docs/telas-iteracao2/           capturas das telas, geradas pelos testes
 ├── sql/schema.sql                  cria o banco, as 13 tabelas e os dados de exemplo
 ├── lib/mysql-connector-j-8.4.0.jar driver JDBC do MySQL
-├── bin/                            saída da compilação
+├── bin/                            saída da compilação (gerada ao compilar; fora do git)
 ├── README.md                       este guia
 └── DOCUMENTACAO.md                 documentação da 1ª iteração
 ```

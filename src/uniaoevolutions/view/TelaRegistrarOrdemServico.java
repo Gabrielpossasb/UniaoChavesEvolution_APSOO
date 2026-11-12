@@ -12,6 +12,8 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
+import javax.swing.ButtonModel;
+import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -24,24 +26,44 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.Scrollable;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.border.Border;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.text.AbstractDocument;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DocumentFilter;
+import javax.swing.text.JTextComponent;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
+import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.Toolkit;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
 
 /**
  * Classe <<boundary>> do Diagrama de Classes e objeto ":Interface" do Diagrama
@@ -61,6 +83,24 @@ public class TelaRegistrarOrdemServico extends JFrame {
     private static final Color CINZA_CAMPO = new Color(0xF6, 0xF7, 0xF9);
     private static final Color VERDE_SITUACAO = new Color(0x16, 0x7C, 0x3C);
     private static final Color AMARELO_AVISO = new Color(0xFF, 0xFB, 0xEB);
+    // Botões do mockup.
+    private static final Color AZUL_CLARO = new Color(0xEF, 0xF6, 0xFF);
+    private static final Color AZUL_CLARO_BORDA = new Color(0xBF, 0xDB, 0xFE);
+    private static final Color CINZA_BORDA_BOTAO = new Color(0xD1, 0xD5, 0xDB);
+    private static final Color CINZA_TEXTO_BOTAO = new Color(0x1F, 0x29, 0x37);
+    // Cores de erro: as mesmas do Solicitar Orçamento.
+    private static final Color VERMELHO = new Color(0xDC, 0x26, 0x26);
+    private static final Color VERMELHO_FUNDO = new Color(0xFE, 0xF2, 0xF2);
+    private static final Color VERMELHO_BORDA = new Color(0xFC, 0xA5, 0xA5);
+    /** Espaço da moldura do campo; com erro, ela vira a borda vermelha. */
+    private static final Border MOLDURA_NORMAL = BorderFactory.createEmptyBorder(2, 2, 2, 2);
+    private static final Border MOLDURA_ERRO = BorderFactory.createLineBorder(VERMELHO, 2);
+
+    // Caracteres aceitos na digitação (o resto é descartado, também ao colar).
+    private static final String SO_DIGITOS = "[0-9]";
+    private static final String SO_DATA = "[0-9/]";
+    private static final String SO_QUILOMETRAGEM = "[0-9.]";
+    private static final String SO_VALOR = "[0-9.,]";
 
     private static final SimpleDateFormat DATA = new SimpleDateFormat("dd/MM/yyyy");
     private static final DecimalFormat MOEDA = criarFormatoMoeda();
@@ -82,7 +122,9 @@ public class TelaRegistrarOrdemServico extends JFrame {
     private final JTextField campoMarcaModelo = criarCampoSomenteLeitura();
     private final JTextField campoAno = criarCampoSomenteLeitura();
     private final JTextField campoQuilometragem = new JTextField();
-    private final JButton botaoHistorico = new JButton("Ver atendimentos anteriores");
+    /** "Ver atendimentos anteriores" do mockup: fundo azul-claro, texto azul em negrito. */
+    private final JButton botaoHistorico = new Botao("Ver atendimentos anteriores", AZUL_CLARO,
+            AZUL_CLARO_BORDA, AZUL_TITULO, null, 12f);
 
     // --- Segmento do Serviço -----------------------------------------
     private final JRadioButton radioModulos =
@@ -93,7 +135,8 @@ public class TelaRegistrarOrdemServico extends JFrame {
     // --- Dados Técnicos ----------------------------------------------
     private final CardLayout cartoes = new CardLayout();
     private final JPanel painelDadosTecnicos = new JPanel(cartoes);
-    private final JLabel rotuloCamposExigidos = new JLabel(" ");
+    /** Quebra a linha na largura da janela (antes, um JLabel longo criava rolagem horizontal). */
+    private final JTextArea textoCamposExigidos = new JTextArea(" ");
     // Módulos (variante V1)
     private final JTextField campoTipoModulo = criarCampoSomenteLeitura();
     private final JTextField campoModeloECU = criarCampoSomenteLeitura();
@@ -120,20 +163,40 @@ public class TelaRegistrarOrdemServico extends JFrame {
     private final JLabel rotuloTotal = new JLabel("Valor total da OS: " + MOEDA.format(0));
 
     // --- Botões do rodapé --------------------------------------------
-    private final JButton botaoVoltar = new JButton("Voltar / Cancelar");
-    private final JButton botaoIncluirItem = new JButton("Incluir item");
-    private final JButton botaoRascunho = new JButton("Salvar rascunho");
-    private final JButton botaoImprimir = new JButton("Imprimir OS");
-    private final JButton botaoSalvar = new JButton("Salvar Ordem de Serviço");
+    // Estilos do mockup: Voltar / Cancelar branco com borda cinza; Imprimir OS
+    // branco com borda e texto azuis e ícone de impressora; Salvar azul cheio.
+    // Salvar rascunho e Incluir item não estão no mockup: seguem o mais próximo.
+    private final JButton botaoVoltar = Botao.neutro("Voltar / Cancelar");
+    private final JButton botaoIncluirItem = Botao.contorno("+ Incluir item", null);
+    private final JButton botaoRascunho = Botao.neutro("Salvar rascunho");
+    private final JButton botaoImprimir = Botao.contorno("Imprimir OS", new IconeImpressora());
+    private final JButton botaoSalvar = Botao.primario("Salvar Ordem de Serviço");
+
+    // --- Validação (mesmo padrão do Solicitar Orçamento) --------------
+    /** FA-11A.1: "identificação dos campos pendentes e a mensagem de cada pendência". */
+    private final JPanel caixaPendencias = new JPanel(new BorderLayout());
+    private final JLabel textoPendencias = new JLabel(" ");
+    private final List<Campo> camposFormulario = new ArrayList<>();
+    private Campo cOrcamento;
+    private Campo cPrazo;
+    private Campo cQuilometragem;
+    private Campo cRelato;
+    private Campo cCondicao;
+    private Campo cDiagnostico;
+    private Campo cServicoExecutado;
+    private Campo cTecnico;
+    private Campo cObservacoes;
 
     /** Impede que o preenchimento automático dispare os eventos de troca. */
     private boolean carregando;
 
     public TelaRegistrarOrdemServico() {
         super("União Evolutions - Registrar Ordem de Serviço");
+        // O "X" da janela não fecha: só o botão "Voltar / Cancelar" (FA-00).
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         setSize(1060, 880);
         setLocationRelativeTo(null);
+        criarCamposValidados();
         montarTela();
         ligarEventos();
         // O passo 1 acessa o banco: é agendado para depois de a janela
@@ -146,7 +209,8 @@ public class TelaRegistrarOrdemServico extends JFrame {
     // =================================================================
 
     private void montarTela() {
-        JPanel conteudo = new JPanel();
+        // Acompanha a largura da janela: só há rolagem vertical.
+        JPanel conteudo = new PainelLarguraDaJanela();
         conteudo.setLayout(new BoxLayout(conteudo, BoxLayout.Y_AXIS));
         conteudo.setBackground(CINZA_FUNDO);
         conteudo.setBorder(BorderFactory.createEmptyBorder(12, 16, 12, 16));
@@ -157,6 +221,9 @@ public class TelaRegistrarOrdemServico extends JFrame {
         obrigatorios.setAlignmentX(LEFT_ALIGNMENT);
         conteudo.add(obrigatorios);
         conteudo.add(Box.createVerticalStrut(8));
+
+        montarCaixaPendencias();
+        conteudo.add(caixaPendencias);
 
         conteudo.add(criarSecaoIdentificacao());
         conteudo.add(Box.createVerticalStrut(10));
@@ -214,12 +281,12 @@ public class TelaRegistrarOrdemServico extends JFrame {
         JPanel secao = criarSecao("IDENTIFICAÇÃO DA OS");
         secao.add(criarLinha(
                 new JComponent[]{
+                        cOrcamento.painel(),
                         criarCampo("Nº da OS", campoNumeroOS),
-                        criarCampo("Orçamento associado *", comboOrcamento),
                         criarCampo("Data de abertura *", campoDataAbertura),
-                        criarCampo("Prazo estimado * (dd/mm/aaaa)", campoPrazoEstimado),
+                        cPrazo.painel(),
                         criarCampo("Situação", rotuloSituacao)},
-                new double[]{1, 1.4, 1, 1.2, 1}));
+                new double[]{1.4, 1, 1, 1.2, 1}));
         return secao;
     }
 
@@ -236,7 +303,7 @@ public class TelaRegistrarOrdemServico extends JFrame {
                         criarCampo("Placa *", campoPlaca),
                         criarCampo("Marca / Modelo", campoMarcaModelo),
                         criarCampo("Ano", campoAno),
-                        criarCampo("Quilometragem *", campoQuilometragem),
+                        cQuilometragem.painel(),
                         criarCampo("Histórico técnico", botaoHistorico)},
                 new double[]{1, 2, 0.6, 1, 1.6}));
         return secao;
@@ -293,12 +360,18 @@ public class TelaRegistrarOrdemServico extends JFrame {
         painelDadosTecnicos.add(criarBlocoChaves(), Segmento.CHAVES);
         painelDadosTecnicos.setAlignmentX(LEFT_ALIGNMENT);
 
-        rotuloCamposExigidos.setFont(rotuloCamposExigidos.getFont().deriveFont(Font.PLAIN, 11f));
-        rotuloCamposExigidos.setForeground(CINZA_ROTULO);
-        rotuloCamposExigidos.setAlignmentX(LEFT_ALIGNMENT);
+        textoCamposExigidos.setFont(new JLabel().getFont().deriveFont(Font.PLAIN, 11f));
+        textoCamposExigidos.setForeground(CINZA_ROTULO);
+        textoCamposExigidos.setEditable(false);
+        textoCamposExigidos.setFocusable(false);
+        textoCamposExigidos.setOpaque(false);
+        textoCamposExigidos.setLineWrap(true);
+        textoCamposExigidos.setWrapStyleWord(true);
+        textoCamposExigidos.setBorder(null);
+        textoCamposExigidos.setAlignmentX(LEFT_ALIGNMENT);
 
         JPanel secao = criarSecao("DADOS TÉCNICOS");
-        secao.add(rotuloCamposExigidos);
+        secao.add(textoCamposExigidos);
         secao.add(Box.createVerticalStrut(6));
         secao.add(painelDadosTecnicos);
         return secao;
@@ -315,15 +388,9 @@ public class TelaRegistrarOrdemServico extends JFrame {
                         criarCampo("Fabricante / Modelo da ECU *", campoModeloECU),
                         criarCampo("Nº da peça / Nº de série *", campoIdentificacaoModulo)},
                 new double[]{1.2, 1.4, 1.2}));
-        bloco.add(criarLinha(
-                new JComponent[]{criarCampo("Sintomas relatados pelo cliente *", campoRelatoInicial)},
-                new double[]{1}));
-        bloco.add(criarLinha(
-                new JComponent[]{criarCampo("Condição de recebimento *", campoCondicaoRecebimento)},
-                new double[]{1}));
-        bloco.add(criarLinha(
-                new JComponent[]{criarCampo("Diagnóstico em bancada *", campoDiagnosticoInicial)},
-                new double[]{1}));
+        bloco.add(criarLinha(new JComponent[]{cRelato.painel()}, new double[]{1}));
+        bloco.add(criarLinha(new JComponent[]{cCondicao.painel()}, new double[]{1}));
+        bloco.add(criarLinha(new JComponent[]{cDiagnostico.painel()}, new double[]{1}));
         return bloco;
     }
 
@@ -337,9 +404,7 @@ public class TelaRegistrarOrdemServico extends JFrame {
                         criarCampo("Código mecânico", campoCodigoMecanico),
                         criarCampo("Senha do imobilizador", campoSenhaImobilizador)},
                 new double[]{1, 1}));
-        bloco.add(criarLinha(
-                new JComponent[]{criarCampo("Serviço de chaves a executar *", campoServicoExecutado)},
-                new double[]{1}));
+        bloco.add(criarLinha(new JComponent[]{cServicoExecutado.painel()}, new double[]{1}));
         return bloco;
     }
 
@@ -367,11 +432,10 @@ public class TelaRegistrarOrdemServico extends JFrame {
         rotuloTotal.setAlignmentX(LEFT_ALIGNMENT);
         rotuloTotal.setMaximumSize(new Dimension(Integer.MAX_VALUE, 24));
 
-        JPanel secao = criarSecao("EXECUÇÃO");
+        // "Incluir item" (FA-11B) no canto superior direito da seção.
+        JPanel secao = criarSecao("EXECUÇÃO", botaoIncluirItem);
         secao.add(criarLinha(
-                new JComponent[]{
-                        criarCampo("Técnico responsável *", comboTecnico),
-                        criarCampo("Observações internas", campoObservacoes)},
+                new JComponent[]{cTecnico.painel(), cObservacoes.painel()},
                 new double[]{1, 2}));
         secao.add(aviso);
         secao.add(Box.createVerticalStrut(10));
@@ -381,7 +445,7 @@ public class TelaRegistrarOrdemServico extends JFrame {
         return secao;
     }
 
-    /** Botões do rodapé do mockup, mais os do FA-11B e FA-11C. */
+    /** Botões do rodapé do mockup, mais o do FA-11C. O do FA-11B fica na seção EXECUÇÃO. */
     private JPanel criarBarraDeBotoes() {
         JPanel barra = new JPanel(new GridBagLayout());
         barra.setBackground(CINZA_FUNDO);
@@ -397,16 +461,10 @@ public class TelaRegistrarOrdemServico extends JFrame {
         c.weightx = 0;
         c.fill = GridBagConstraints.NONE;
         c.insets = new Insets(0, 8, 0, 0);
-        for (JButton botao : new JButton[]{botaoVoltar, botaoIncluirItem, botaoRascunho,
-                                           botaoImprimir, botaoSalvar}) {
+        for (JButton botao : new JButton[]{botaoVoltar, botaoRascunho, botaoImprimir, botaoSalvar}) {
             c.gridx++;
             barra.add(botao, c);
         }
-
-        botaoSalvar.setBackground(AZUL_CABECALHO);
-        botaoSalvar.setForeground(Color.WHITE);
-        botaoSalvar.setOpaque(true);
-        botaoSalvar.setBorderPainted(false);
         return barra;
     }
 
@@ -420,6 +478,161 @@ public class TelaRegistrarOrdemServico extends JFrame {
         botaoIncluirItem.addActionListener(evento -> incluirItem());
         botaoImprimir.addActionListener(evento -> imprimir());
         botaoVoltar.addActionListener(evento -> cancelar());
+
+        // A digitação descarta o que não é permitido (também ao colar).
+        restringir(campoQuilometragem, SO_QUILOMETRAGEM, 9);
+        restringir(campoPrazoEstimado, SO_DATA, 10);
+
+        // (a) validação ao perder o foco.
+        aoPerderFoco(campoPrazoEstimado, () -> {
+            // A data digitada sem barras (ddmmaaaa) ganha as barras.
+            Date data = Validacoes.converterData(campoPrazoEstimado.getText());
+            if (data != null) {
+                campoPrazoEstimado.setText(DATA.format(data));
+            }
+            cPrazo.validar();
+        });
+        aoPerderFoco(campoQuilometragem, cQuilometragem::validar);
+        aoPerderFoco(campoRelatoInicial, cRelato::validar);
+        aoPerderFoco(campoCondicaoRecebimento, cCondicao::validar);
+        aoPerderFoco(campoDiagnosticoInicial, cDiagnostico::validar);
+        aoPerderFoco(campoServicoExecutado, cServicoExecutado::validar);
+        aoPerderFoco(campoObservacoes, cObservacoes::validar);
+        comboTecnico.addActionListener(evento -> {
+            if (!carregando) {
+                cTecnico.validar();
+            }
+        });
+    }
+
+    // =================================================================
+    // Validação dos campos (momentos (a) e (b), como no Solicitar Orçamento)
+    // =================================================================
+
+    /**
+     * Cria os campos validados e a regra de cada um. Cada regra roda ao
+     * perder o foco (a) e de novo ao salvar, com o formulário inteiro (b).
+     */
+    private void criarCamposValidados() {
+        cOrcamento = new Campo("Orçamento associado", "Orçamento associado *", comboOrcamento)
+                .regra(() -> comboOrcamento.getSelectedItem() == null
+                        ? "Selecione o orçamento que originará a Ordem de Serviço." : null);
+        cPrazo = new Campo("Prazo estimado", "Prazo estimado * (dd/mm/aaaa)", campoPrazoEstimado)
+                .regra(this::validarPrazo);
+        cQuilometragem = new Campo("Quilometragem", "Quilometragem *", campoQuilometragem)
+                .regra(this::validarQuilometragem);
+
+        BooleanSupplier modulos = () -> Segmento.MODULOS.equals(segmentoSelecionado());
+        BooleanSupplier chaves = () -> Segmento.CHAVES.equals(segmentoSelecionado());
+        cRelato = new Campo("Sintomas relatados pelo cliente", "Sintomas relatados pelo cliente *",
+                campoRelatoInicial).quando(modulos).doSegmento(Segmento.MODULOS)
+                .regra(() -> Validacoes.validarObrigatorio(campoRelatoInicial.getText()));
+        cCondicao = new Campo("Condição de recebimento", "Condição de recebimento *",
+                campoCondicaoRecebimento).quando(modulos).doSegmento(Segmento.MODULOS)
+                .regra(() -> Validacoes.validarObrigatorio(campoCondicaoRecebimento.getText()));
+        cDiagnostico = new Campo("Diagnóstico em bancada", "Diagnóstico em bancada *",
+                campoDiagnosticoInicial).quando(modulos).doSegmento(Segmento.MODULOS)
+                .regra(() -> Validacoes.validarObrigatorio(campoDiagnosticoInicial.getText()));
+        cServicoExecutado = new Campo("Serviço de chaves a executar", "Serviço de chaves a executar *",
+                campoServicoExecutado).quando(chaves).doSegmento(Segmento.CHAVES)
+                .regra(() -> Validacoes.validarObrigatorio(campoServicoExecutado.getText()));
+
+        cTecnico = new Campo("Técnico responsável", "Técnico responsável *", comboTecnico)
+                .regra(() -> comboTecnico.getSelectedItem() == null
+                        ? "Selecione o técnico responsável pela Ordem de Serviço." : null);
+        cObservacoes = new Campo("Observações internas", "Observações internas", campoObservacoes)
+                .regra(() -> Validacoes.validarTamanho(campoObservacoes.getText()));
+
+        // Na ordem da tela, para a caixa de pendências listar de cima para baixo.
+        camposFormulario.addAll(List.of(cOrcamento, cPrazo, cQuilometragem, cRelato, cCondicao, cDiagnostico,
+                cServicoExecutado, cTecnico, cObservacoes));
+    }
+
+    private String validarPrazo() {
+        String texto = campoPrazoEstimado.getText().trim();
+        if (texto.isEmpty()) {
+            return Validacoes.MSG_OBRIGATORIO;
+        }
+        Date prazo = Validacoes.converterData(texto);
+        if (prazo == null) {
+            return "Informe uma data válida no formato dd/mm/aaaa.";
+        }
+        Date abertura = Validacoes.converterData(campoDataAbertura.getText());
+        if (abertura != null && prazo.before(abertura)) {
+            return "O prazo estimado não pode ser anterior à data de abertura.";
+        }
+        return null;
+    }
+
+    private String validarQuilometragem() {
+        String texto = campoQuilometragem.getText().trim();
+        if (texto.isEmpty()) {
+            return Validacoes.MSG_OBRIGATORIO;
+        }
+        // Ponto só como separador de milhar: 85400 ou 85.400.
+        if (!texto.matches("\\d{1,7}") && !texto.matches("\\d{1,3}(\\.\\d{3}){1,2}")) {
+            return "Informe a quilometragem só com números (ex.: 85.400).";
+        }
+        return Integer.parseInt(texto.replace(".", "")) <= 0
+                ? "Informe uma quilometragem maior que zero." : null;
+    }
+
+    /** Caixa vermelha do topo do formulário (FA-11A.1). */
+    private void montarCaixaPendencias() {
+        caixaPendencias.setBackground(VERMELHO_FUNDO);
+        caixaPendencias.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createCompoundBorder(
+                        BorderFactory.createEmptyBorder(0, 0, 10, 0),
+                        BorderFactory.createLineBorder(VERMELHO_BORDA)),
+                BorderFactory.createEmptyBorder(10, 14, 10, 14)));
+        caixaPendencias.setAlignmentX(LEFT_ALIGNMENT);
+        textoPendencias.setForeground(VERMELHO);
+        textoPendencias.setFont(textoPendencias.getFont().deriveFont(Font.PLAIN, 12f));
+        caixaPendencias.add(textoPendencias, BorderLayout.CENTER);
+        caixaPendencias.setVisible(false);
+    }
+
+    /**
+     * Momento (b): valida os campos informados de uma vez. Com pendências,
+     * marca cada campo, lista todas na caixa do topo e devolve false
+     * (FA-11A.1); o que já foi digitado fica preservado (FA-11A.3).
+     */
+    private boolean validarCampos(List<Campo> campos, String acao) {
+        List<String> pendencias = new ArrayList<>();
+        for (Campo campo : campos) {
+            String erro = campo.validar();
+            if (erro != null) {
+                pendencias.add(campo.textoPendencia(erro));
+            }
+        }
+        if (pendencias.isEmpty()) {
+            caixaPendencias.setVisible(false);
+            return true;
+        }
+        StringBuilder texto = new StringBuilder("<html><b>Corrija " + pendencias.size()
+                + (pendencias.size() == 1 ? " pendência" : " pendências") + " antes de " + acao + ":</b>");
+        for (String pendencia : pendencias) {
+            texto.append("<br>• ").append(pendencia);
+        }
+        textoPendencias.setText(texto.append("</html>").toString());
+        caixaPendencias.setVisible(true);
+        caixaPendencias.setMaximumSize(new Dimension(Integer.MAX_VALUE, caixaPendencias.getPreferredSize().height));
+        caixaPendencias.revalidate();
+        SwingUtilities.invokeLater(() ->
+                caixaPendencias.scrollRectToVisible(new Rectangle(caixaPendencias.getSize())));
+        return false;
+    }
+
+    /** Ao trocar de segmento ou de formulário, some a marca dos campos que não valem mais. */
+    private void limparMarcas(boolean todas) {
+        for (Campo campo : camposFormulario) {
+            if (todas || !campo.aplicavel()) {
+                campo.limpar();
+            }
+        }
+        if (todas) {
+            caixaPendencias.setVisible(false);
+        }
     }
 
     // =================================================================
@@ -551,28 +764,40 @@ public class TelaRegistrarOrdemServico extends JFrame {
 
         // Passo 6: campos exigidos pela RN-03.
         List<String> campos = controladora.consultarBlocosDadosTecnicos(segmento);
-        rotuloCamposExigidos.setText("Campos exigidos no segmento " + segmento + ": "
+        textoCamposExigidos.setText("Campos exigidos no segmento " + segmento + ": "
                 + String.join(" | ", campos));
         cartoes.show(painelDadosTecnicos, segmento);
+        limparMarcas(false);
 
         // Passo 9: técnicos habilitados.
         try {
             List<Usuario> tecnicos = controladora.consultarTecnicosHabilitados(segmento);
+            carregando = true;
             comboTecnico.removeAllItems();
             for (Usuario tecnico : tecnicos) {
                 comboTecnico.addItem(tecnico);
             }
+            carregando = false;
             if (tecnicos.isEmpty()) {
                 // FA-09.1
+                cTecnico.validar();
                 mostrarAviso("Não há técnico habilitado disponível para este segmento");
+            } else {
+                cTecnico.limpar();
             }
         } catch (SQLException erro) {
             mostrarErroDeBanco(erro);
         }
     }
 
-    /** Passo 12: confirma o registro da Ordem de Serviço. */
+    /**
+     * Passo 11: revalida o formulário inteiro (momento b) e, sem
+     * pendências, confirma o registro. Com pendências, FA-11A.
+     */
     private void salvar() {
+        if (!validarCampos(camposFormulario, "salvar a Ordem de Serviço")) {
+            return;   // FA-11A
+        }
         try {
             Orcamento orcamento = orcamentoSelecionado();
             Usuario tecnico = tecnicoSelecionado();
@@ -608,8 +833,15 @@ public class TelaRegistrarOrdemServico extends JFrame {
     // Fluxos alternativos
     // =================================================================
 
-    /** FA-11C: salva a Ordem de Serviço como rascunho. */
+    /**
+     * FA-11C: salva a Ordem de Serviço como rascunho. Valida só o que o
+     * rascunho grava (os dados técnicos podem ficar para depois: FA-11C.3).
+     */
     private void salvarRascunho() {
+        if (!validarCampos(List.of(cOrcamento, cPrazo, cQuilometragem, cTecnico, cObservacoes),
+                "salvar o rascunho")) {
+            return;
+        }
         try {
             Orcamento orcamento = orcamentoSelecionado();
             Usuario tecnico = tecnicoSelecionado();
@@ -634,37 +866,69 @@ public class TelaRegistrarOrdemServico extends JFrame {
 
     /** FA-11B: inclusão de item não previsto no orçamento aprovado. */
     private void incluirItem() {
+        // FA-11B.1: serviço ou peça, quantidade e valor, num formulário só,
+        // com a mesma validação dos campos da tela.
+        JTextField campoServico = new JTextField();
+        JTextField campoQuantidade = new JTextField("1");
+        JTextField campoValor = new JTextField();
+        restringir(campoQuantidade, SO_DIGITOS, 4);
+        restringir(campoValor, SO_VALOR, 15);
+        Campo cServico = new Campo("Serviço ou peça", "Serviço ou peça a incluir *", campoServico)
+                .regra(() -> Validacoes.validarObrigatorio(campoServico.getText()));
+        Campo cQuantidade = new Campo("Quantidade", "Quantidade *", campoQuantidade).regra(() -> {
+            String texto = campoQuantidade.getText().trim();
+            if (texto.isEmpty()) {
+                return Validacoes.MSG_OBRIGATORIO;
+            }
+            return Integer.parseInt(texto) <= 0 ? "Informe uma quantidade maior que zero." : null;
+        });
+        Campo cValor = new Campo("Valor unitário", "Valor unitário (R$) *", campoValor).regra(() -> {
+            String texto = campoValor.getText().trim();
+            if (texto.isEmpty()) {
+                return Validacoes.MSG_OBRIGATORIO;
+            }
+            Double valor = Validacoes.converterValor(texto);
+            if (valor == null) {
+                return "Informe um valor válido (ex.: 120,00 ou 1.250,00).";
+            }
+            return valor <= 0 ? "Informe um valor maior que zero." : null;
+        });
+        aoPerderFoco(campoServico, cServico::validar);
+        aoPerderFoco(campoQuantidade, cQuantidade::validar);
+        aoPerderFoco(campoValor, cValor::validar);
+
+        JPanel corpo = new JPanel();
+        corpo.setLayout(new BoxLayout(corpo, BoxLayout.Y_AXIS));
+        corpo.add(criarLinha(new JComponent[]{cServico.painel()}, new double[]{1}));
+        corpo.add(criarLinha(new JComponent[]{cQuantidade.painel(), cValor.painel()}, new double[]{1, 1}));
+        corpo.setPreferredSize(new Dimension(480, corpo.getPreferredSize().height));
+        if (!pedirComValidacao(corpo, "Incluir item", cServico, cQuantidade, cValor)) {
+            return;
+        }
+        String servico = campoServico.getText().trim();
+        int quantidade = Integer.parseInt(campoQuantidade.getText().trim());
+        double valor = Validacoes.converterValor(campoValor.getText());
+
         try {
-            String servico = JOptionPane.showInputDialog(this,
-                    "Serviço ou peça a incluir:", "Incluir item", JOptionPane.QUESTION_MESSAGE);
-            if (servico == null) {
-                return;
-            }
-            String quantidadeTexto = JOptionPane.showInputDialog(this,
-                    "Quantidade:", "Incluir item", JOptionPane.QUESTION_MESSAGE);
-            if (quantidadeTexto == null) {
-                return;
-            }
-            String valorTexto = JOptionPane.showInputDialog(this,
-                    "Valor unitário (ex.: 120,00):", "Incluir item", JOptionPane.QUESTION_MESSAGE);
-            if (valorTexto == null) {
-                return;
-            }
-
-            int quantidade = lerInteiro(quantidadeTexto, "Informe uma quantidade numérica válida.");
-            double valor = lerDecimal(valorTexto, "Informe um valor numérico válido.");
-
             // FA-11B.2: exibe a exigência de justificativa.
-            String exigencia = controladora.incluirItemOrdemServico(servico.trim(), quantidade, valor);
-            String justificativa = JOptionPane.showInputDialog(this, exigencia,
-                    "Justificativa da alteração (RN-05)", JOptionPane.WARNING_MESSAGE);
-            if (justificativa == null) {
+            String exigencia = controladora.incluirItemOrdemServico(servico, quantidade, valor);
+
+            // FA-11B.3: justificativa obrigatória (RN-05).
+            JTextField campoJustificativa = new JTextField();
+            Campo cJustificativa = new Campo("Justificativa", "Justificativa da alteração *", campoJustificativa)
+                    .regra(() -> Validacoes.validarObrigatorio(campoJustificativa.getText()));
+            aoPerderFoco(campoJustificativa, cJustificativa::validar);
+            JPanel corpoJustificativa = new JPanel(new BorderLayout(0, 10));
+            corpoJustificativa.add(new JLabel("<html><div style='width:420px'>" + exigencia + "</div></html>"),
+                    BorderLayout.NORTH);
+            corpoJustificativa.add(cJustificativa.painel(), BorderLayout.CENTER);
+            if (!pedirComValidacao(corpoJustificativa, "Justificativa da alteração (RN-05)", cJustificativa)) {
                 return;
             }
 
             // FA-11B.3 e FA-11B.4
             String resultado = controladora.registrarOSComAlteracao(
-                    servico.trim(), quantidade, valor, justificativa.trim());
+                    servico, quantidade, valor, campoJustificativa.getText().trim());
             JOptionPane.showMessageDialog(this, resultado, "Alteração registrada",
                     JOptionPane.INFORMATION_MESSAGE);
 
@@ -773,12 +1037,12 @@ public class TelaRegistrarOrdemServico extends JFrame {
         if (texto.isEmpty()) {
             throw new IllegalArgumentException("Informe o prazo estimado de conclusão.");
         }
-        try {
-            DATA.setLenient(false);
-            return DATA.parse(texto);
-        } catch (ParseException erro) {
+        // Aceita dd/mm/aaaa e ddmmaaaa, como o "Válido até" do Solicitar Orçamento.
+        Date prazo = Validacoes.converterData(texto);
+        if (prazo == null) {
             throw new IllegalArgumentException("Informe o prazo estimado no formato dd/mm/aaaa.");
         }
+        return prazo;
     }
 
     private int lerInteiro(String texto, String mensagem) {
@@ -789,12 +1053,73 @@ public class TelaRegistrarOrdemServico extends JFrame {
         }
     }
 
-    private double lerDecimal(String texto, String mensagem) {
-        try {
-            return Double.parseDouble(texto.trim().replace(".", "").replace(",", "."));
-        } catch (NumberFormatException erro) {
-            throw new IllegalArgumentException(mensagem);
+    /**
+     * Diálogo que só fecha no OK com todos os campos válidos (momento b);
+     * cada campo também valida ao perder o foco (momento a). Com erro, o
+     * diálogo volta com o que foi digitado e as marcas nos campos.
+     */
+    private boolean pedirComValidacao(JComponent corpo, String titulo, Campo... campos) {
+        while (true) {
+            int resposta = JOptionPane.showConfirmDialog(this, corpo, titulo,
+                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+            if (resposta != JOptionPane.OK_OPTION) {
+                return false;
+            }
+            boolean valido = true;
+            for (Campo campo : campos) {
+                valido &= campo.validar() == null;
+            }
+            if (valido) {
+                return true;
+            }
         }
+    }
+
+    /**
+     * O campo descarta, ao digitar ou colar, todo caractere fora do padrão e
+     * não passa do tamanho máximo (mesmo filtro do Solicitar Orçamento).
+     */
+    private static void restringir(JTextComponent campo, String permitido, int maximo) {
+        ((AbstractDocument) campo.getDocument()).setDocumentFilter(new DocumentFilter() {
+            @Override
+            public void insertString(FilterBypass fb, int posicao, String texto, AttributeSet atributos)
+                    throws BadLocationException {
+                replace(fb, posicao, 0, texto, atributos);
+            }
+
+            @Override
+            public void replace(FilterBypass fb, int posicao, int tamanho, String texto, AttributeSet atributos)
+                    throws BadLocationException {
+                StringBuilder aceito = new StringBuilder();
+                if (texto != null) {
+                    for (char c : texto.toCharArray()) {
+                        if (String.valueOf(c).matches(permitido)) {
+                            aceito.append(c);
+                        }
+                    }
+                }
+                int livre = maximo - (fb.getDocument().getLength() - tamanho);
+                if (aceito.length() > livre) {
+                    aceito.setLength(Math.max(0, livre));
+                }
+                if (aceito.length() == 0 && tamanho == 0) {
+                    Toolkit.getDefaultToolkit().beep();
+                    return;
+                }
+                super.replace(fb, posicao, tamanho, aceito.toString(), atributos);
+            }
+        });
+    }
+
+    private static void aoPerderFoco(JComponent componente, Runnable acao) {
+        componente.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusLost(FocusEvent evento) {
+                if (!evento.isTemporary()) {
+                    acao.run();
+                }
+            }
+        });
     }
 
     // =================================================================
@@ -810,6 +1135,7 @@ public class TelaRegistrarOrdemServico extends JFrame {
         campoCondicaoRecebimento.setText("");
         campoDiagnosticoInicial.setText("");
         campoServicoExecutado.setText("");
+        limparMarcas(true);
         iniciarRegistro();
     }
 
@@ -894,6 +1220,11 @@ public class TelaRegistrarOrdemServico extends JFrame {
 
     /** Cartão branco com título, como as seções do mockup. */
     private JPanel criarSecao(String titulo) {
+        return criarSecao(titulo, null);
+    }
+
+    /** Cartão branco com título e, opcionalmente, um componente no canto superior direito. */
+    private JPanel criarSecao(String titulo, JComponent direita) {
         JPanel painel = new JPanel();
         painel.setLayout(new BoxLayout(painel, BoxLayout.Y_AXIS));
         painel.setBackground(Color.WHITE);
@@ -902,17 +1233,28 @@ public class TelaRegistrarOrdemServico extends JFrame {
         JLabel rotulo = new JLabel(titulo);
         rotulo.setFont(rotulo.getFont().deriveFont(Font.BOLD, 12f));
         rotulo.setForeground(AZUL_TITULO);
-        rotulo.setAlignmentX(LEFT_ALIGNMENT);
-        rotulo.setBorder(BorderFactory.createEmptyBorder(0, 0, 8, 0));
+
+        JPanel cabecalho = new JPanel(new BorderLayout(12, 0));
+        cabecalho.setOpaque(false);
+        cabecalho.setAlignmentX(LEFT_ALIGNMENT);
+        cabecalho.setBorder(BorderFactory.createEmptyBorder(0, 0, 8, 0));
+        cabecalho.add(rotulo, BorderLayout.WEST);
+        if (direita != null) {
+            cabecalho.add(direita, BorderLayout.EAST);
+        }
+        cabecalho.setMaximumSize(new Dimension(Integer.MAX_VALUE, cabecalho.getPreferredSize().height));
 
         painel.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(0xE2, 0xE6, 0xEC)),
                 BorderFactory.createEmptyBorder(12, 16, 14, 16)));
-        painel.add(rotulo);
+        painel.add(cabecalho);
         return painel;
     }
 
-    /** Campo do formulário: rótulo em cima, componente embaixo. */
+    /**
+     * Campo só de leitura: rótulo em cima, componente embaixo. Tem a mesma
+     * moldura dos campos validados, para as linhas ficarem alinhadas.
+     */
     private JPanel criarCampo(String rotulo, JComponent componente) {
         JPanel painel = new JPanel(new BorderLayout(0, 3));
         painel.setOpaque(false);
@@ -922,8 +1264,12 @@ public class TelaRegistrarOrdemServico extends JFrame {
         label.setForeground(CINZA_ROTULO);
 
         componente.setPreferredSize(new Dimension(10, 26));
+        JPanel moldura = new JPanel(new BorderLayout());
+        moldura.setOpaque(false);
+        moldura.setBorder(MOLDURA_NORMAL);
+        moldura.add(componente, BorderLayout.CENTER);
         painel.add(label, BorderLayout.NORTH);
-        painel.add(componente, BorderLayout.CENTER);
+        painel.add(moldura, BorderLayout.CENTER);
         return painel;
     }
 
@@ -935,6 +1281,8 @@ public class TelaRegistrarOrdemServico extends JFrame {
 
         GridBagConstraints c = new GridBagConstraints();
         c.fill = GridBagConstraints.HORIZONTAL;
+        // Topo: um campo com mensagem de erro embaixo não desalinha os vizinhos.
+        c.anchor = GridBagConstraints.NORTH;
         c.insets = new Insets(4, 0, 4, 12);
         c.gridy = 0;
         for (int i = 0; i < campos.length; i++) {
@@ -951,6 +1299,283 @@ public class TelaRegistrarOrdemServico extends JFrame {
         campo.setEditable(false);
         campo.setBackground(CINZA_CAMPO);
         return campo;
+    }
+
+    // =================================================================
+    // Classes internas
+    // =================================================================
+
+    /**
+     * Um campo com validação, como no Solicitar Orçamento: rótulo,
+     * componente e regra. Com erro, a moldura em volta do componente fica
+     * vermelha e a mensagem aparece embaixo dele. A moldura (e não a borda
+     * do próprio componente) recebe o vermelho porque esta tela usa o look
+     * and feel do sistema, que pode ignorar bordas e fundos customizados.
+     */
+    private final class Campo {
+        private final String nome;
+        private final String rotuloTela;
+        private final JComponent componente;
+        private final JPanel moldura = new JPanel(new BorderLayout());
+        private final JLabel mensagem = new JLabel(" ") {
+            private static final long serialVersionUID = 1L;
+
+            // A mensagem não alarga a coluna do formulário.
+            @Override
+            public Dimension getPreferredSize() {
+                return new Dimension(10, super.getPreferredSize().height);
+            }
+
+            @Override
+            public Dimension getMinimumSize() {
+                return getPreferredSize();
+            }
+        };
+        private Supplier<String> regra = () -> null;
+        private BooleanSupplier aplicavel = () -> true;
+        private String segmento;
+
+        Campo(String nome, String rotuloTela, JComponent componente) {
+            this.nome = nome;
+            this.rotuloTela = rotuloTela;
+            this.componente = componente;
+            componente.setPreferredSize(new Dimension(10, 26));
+            moldura.setOpaque(false);
+            moldura.setBorder(MOLDURA_NORMAL);
+            moldura.add(componente, BorderLayout.CENTER);
+            mensagem.setFont(mensagem.getFont().deriveFont(Font.BOLD, 10.5f));
+            mensagem.setForeground(VERMELHO);
+        }
+
+        Campo regra(Supplier<String> novaRegra) {
+            this.regra = novaRegra;
+            return this;
+        }
+
+        Campo quando(BooleanSupplier condicao) {
+            this.aplicavel = condicao;
+            return this;
+        }
+
+        /** Campo exigido pela RN-03: a pendência cita o segmento. */
+        Campo doSegmento(String nomeSegmento) {
+            this.segmento = nomeSegmento;
+            return this;
+        }
+
+        boolean aplicavel() {
+            return aplicavel.getAsBoolean();
+        }
+
+        JPanel painel() {
+            JPanel painel = new JPanel(new BorderLayout(0, 3));
+            painel.setOpaque(false);
+            JLabel rotulo = new JLabel(rotuloTela);
+            rotulo.setFont(rotulo.getFont().deriveFont(Font.PLAIN, 11f));
+            rotulo.setForeground(CINZA_ROTULO);
+            painel.add(rotulo, BorderLayout.NORTH);
+            painel.add(moldura, BorderLayout.CENTER);
+            painel.add(mensagem, BorderLayout.SOUTH);
+            return painel;
+        }
+
+        /** Valida e marca (ou desmarca) o campo. Devolve a mensagem de erro, ou null. */
+        String validar() {
+            if (!aplicavel()) {
+                limpar();
+                return null;
+            }
+            String erro = regra.get();
+            if (erro == null) {
+                limpar();
+            } else {
+                marcar(erro);
+            }
+            return erro;
+        }
+
+        void marcar(String texto) {
+            moldura.setBorder(MOLDURA_ERRO);
+            mensagem.setText(texto);
+            mensagem.setToolTipText(texto);
+            mensagem.setName("erro:" + nome);
+        }
+
+        void limpar() {
+            moldura.setBorder(MOLDURA_NORMAL);
+            mensagem.setText(" ");
+            mensagem.setToolTipText(null);
+            mensagem.setName(null);
+        }
+
+        /** Linha da caixa de pendências: "Diagnóstico em bancada: campo obrigatório para o segmento Modulos." */
+        String textoPendencia(String erro) {
+            if (Validacoes.MSG_OBRIGATORIO.equals(erro)) {
+                return nome + ": campo obrigatório" + (segmento == null ? "." : " para o segmento " + segmento + ".");
+            }
+            return nome + ": " + erro;
+        }
+    }
+
+    /**
+     * Botão com o estilo do mockup: fundo, borda arredondada, texto em
+     * negrito e ícone opcional. Desenha tudo sozinho porque esta tela usa o
+     * look and feel do sistema (GTK, Windows), que ignora a cor de fundo e o
+     * arredondamento de um JButton comum.
+     */
+    private static final class Botao extends JButton {
+        private static final long serialVersionUID = 1L;
+        private static final int RAIO = 10;
+
+        private final Color fundo;
+        private final Color borda;
+
+        Botao(String texto, Color fundo, Color borda, Color cor, Icon icone, float tamanhoFonte) {
+            super(texto, icone);
+            this.fundo = fundo;
+            this.borda = borda;
+            setForeground(cor);
+            setFont(getFont().deriveFont(Font.BOLD, tamanhoFonte));
+            setContentAreaFilled(false);
+            setBorderPainted(false);
+            setFocusPainted(false);
+            setOpaque(false);
+            setRolloverEnabled(true);
+            setIconTextGap(8);
+            setBorder(BorderFactory.createEmptyBorder(10, 22, 10, 22));
+            setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        }
+
+        /** "Salvar Ordem de Serviço": azul cheio, texto branco. */
+        static Botao primario(String texto) {
+            return new Botao(texto, AZUL_CABECALHO, AZUL_CABECALHO, Color.WHITE, null, 13f);
+        }
+
+        /** "Imprimir OS": branco, borda e texto azuis. */
+        static Botao contorno(String texto, Icon icone) {
+            return new Botao(texto, Color.WHITE, AZUL_CABECALHO, AZUL_CABECALHO, icone, 13f);
+        }
+
+        /** "Voltar / Cancelar": branco, borda cinza, texto escuro. */
+        static Botao neutro(String texto) {
+            return new Botao(texto, Color.WHITE, CINZA_BORDA_BOTAO, CINZA_TEXTO_BOTAO, null, 13f);
+        }
+
+        @Override
+        public Dimension getPreferredSize() {
+            if (isPreferredSizeSet()) {
+                return super.getPreferredSize();
+            }
+            FontMetrics fm = getFontMetrics(getFont());
+            Insets in = getInsets();
+            Icon icone = getIcon();
+            int largura = fm.stringWidth(getText()) + (icone == null ? 0 : icone.getIconWidth() + getIconTextGap());
+            int altura = Math.max(fm.getHeight(), icone == null ? 0 : icone.getIconHeight());
+            return new Dimension(largura + in.left + in.right, altura + in.top + in.bottom);
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            ButtonModel modelo = getModel();
+            Color corFundo = fundo;
+            Color corBorda = borda;
+            Color corTexto = getForeground();
+            if (!isEnabled()) {
+                corFundo = misturar(fundo, Color.WHITE, 0.55f);
+                corBorda = misturar(borda, Color.WHITE, 0.55f);
+                corTexto = misturar(corTexto, Color.WHITE, 0.55f);
+            } else if (modelo.isPressed()) {
+                corFundo = misturar(fundo, Color.BLACK, 0.12f);
+            } else if (modelo.isRollover()) {
+                corFundo = fundo.equals(Color.WHITE) ? new Color(0xF3, 0xF4, 0xF6) : misturar(fundo, Color.WHITE, 0.12f);
+            }
+            int w = getWidth();
+            int h = getHeight();
+            g2.setColor(corFundo);
+            g2.fillRoundRect(0, 0, w - 1, h - 1, RAIO, RAIO);
+            g2.setColor(corBorda);
+            g2.setStroke(new BasicStroke(1.2f));
+            g2.drawRoundRect(0, 0, w - 1, h - 1, RAIO, RAIO);
+
+            // Ícone e texto centralizados.
+            g2.setFont(getFont());
+            FontMetrics fm = g2.getFontMetrics();
+            Icon icone = getIcon();
+            int larguraIcone = icone == null ? 0 : icone.getIconWidth() + getIconTextGap();
+            int x = (w - fm.stringWidth(getText()) - larguraIcone) / 2;
+            if (icone != null) {
+                g2.setColor(corTexto);
+                icone.paintIcon(this, g2, x, (h - icone.getIconHeight()) / 2);
+            }
+            g2.setColor(corTexto);
+            g2.drawString(getText(), x + larguraIcone, (h - fm.getHeight()) / 2 + fm.getAscent());
+            g2.dispose();
+        }
+
+        private static Color misturar(Color a, Color b, float proporcaoB) {
+            float p = 1 - proporcaoB;
+            return new Color(Math.round(a.getRed() * p + b.getRed() * proporcaoB),
+                    Math.round(a.getGreen() * p + b.getGreen() * proporcaoB),
+                    Math.round(a.getBlue() * p + b.getBlue() * proporcaoB));
+        }
+    }
+
+    /** Ícone de impressora do botão "Imprimir OS" do mockup, na cor do texto. */
+    private static final class IconeImpressora implements Icon {
+        @Override
+        public void paintIcon(Component c, Graphics g, int x, int y) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setStroke(new BasicStroke(1.8f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            g2.translate(x, y);
+            g2.drawRect(4, 1, 8, 4);              // papel saindo por cima
+            g2.drawRoundRect(1, 5, 14, 7, 3, 3);  // corpo
+            g2.drawRect(4, 9, 8, 6);              // papel impresso
+            g2.dispose();
+        }
+
+        @Override
+        public int getIconWidth() {
+            return 16;
+        }
+
+        @Override
+        public int getIconHeight() {
+            return 16;
+        }
+    }
+
+    /** O formulário acompanha a largura da janela: as linhas se ajustam e só há rolagem vertical. */
+    private static final class PainelLarguraDaJanela extends JPanel implements Scrollable {
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        public Dimension getPreferredScrollableViewportSize() {
+            return getPreferredSize();
+        }
+
+        @Override
+        public int getScrollableUnitIncrement(Rectangle area, int orientacao, int direcao) {
+            return 16;
+        }
+
+        @Override
+        public int getScrollableBlockIncrement(Rectangle area, int orientacao, int direcao) {
+            return Math.max(16, area.height - 32);
+        }
+
+        @Override
+        public boolean getScrollableTracksViewportWidth() {
+            return true;
+        }
+
+        @Override
+        public boolean getScrollableTracksViewportHeight() {
+            return false;
+        }
     }
 
     private static DecimalFormat criarFormatoMoeda() {

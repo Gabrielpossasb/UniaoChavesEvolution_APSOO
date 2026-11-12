@@ -194,7 +194,8 @@ E o polimorfismo em `getSegmento()`: cada subclasse sabe o seu próprio segmento
 e a tela não precisam perguntar o tipo do objeto.
 
 **Por que a validação fica no negócio e não na tela?** Porque a RN-03 e a RN-04 são regras do
-**negócio**, não da tela. Se amanhã existir uma importação de OS por arquivo, ela também vai chamar
+**negócio**, não da tela. (A tela também confere formato e obrigatoriedade antes de chamar a
+controladora, para mostrar todas as pendências de uma vez; o `validar()` continua sendo a garantia.) Se amanhã existir uma importação de OS por arquivo, ela também vai chamar
 `validar()` e as regras continuam valendo. `validar()` **lança** a exceção em vez de mostrar uma
 janela: a camada de negócio não sabe se existe tela.
 
@@ -274,15 +275,32 @@ Um `JFrame` com as cinco seções do mockup, na mesma ordem e com os mesmos rót
 
 | Seção do mockup | O que a tela mostra |
 |---|---|
-| Identificação da OS | Nº da OS (automático), Orçamento associado (combo), Data de abertura, Prazo estimado, Situação |
+| Identificação da OS | Orçamento associado (combo), Nº da OS (automático), Data de abertura, Prazo estimado, Situação |
 | Cliente e Veículo | Cliente, Telefone/Whatsapp, Placa, Marca/Modelo, Ano, Quilometragem, botão de histórico técnico |
 | Segmento do Serviço | Os dois `JRadioButton` e o aviso amarelo, com o texto literal do mockup |
 | Dados Técnicos | `CardLayout` com o bloco de Módulos (V1) e o de Chaves (V2) — só um aparece |
 | Execução | Técnico responsável (combo), Observações internas, tabela de itens e Valor total da OS |
 
 Os botões do rodapé são os do mockup (**Voltar / Cancelar**, **Imprimir OS**, **Salvar Ordem de
-Serviço**) mais dois que existem para exercitar operações que estão no Diagrama de Classes:
-**Incluir item** (FA-11B) e **Salvar rascunho** (FA-11C).
+Serviço**) mais **Salvar rascunho** (FA-11C), que existe para exercitar uma operação do Diagrama de
+Classes. O **Incluir item** (FA-11B) fica no canto superior direito da seção Execução, junto da
+tabela de itens.
+
+Os botões têm o estilo do mockup (desde 11/11/2026): **Salvar Ordem de Serviço** azul cheio com
+texto branco; **Imprimir OS** branco com borda e texto azuis e ícone de impressora; **Voltar /
+Cancelar** branco com borda cinza; **Ver atendimentos anteriores** azul-claro com texto azul. Os que
+não estão no mockup seguem o mais parecido: **Salvar rascunho** como o Voltar, **+ Incluir item** como
+o Imprimir. Todos têm cantos arredondados e são desenhados pela classe interna `Botao`, porque esta
+tela usa o look and feel do sistema, que ignora cor de fundo e arredondamento de um `JButton` comum.
+
+**Validação dos campos (desde 11/11/2026, igual à do Solicitar Orçamento).** Cada campo digitável
+valida **(a)** ao perder o foco e **(b)** de novo ao salvar, com o formulário inteiro. Com erro, a
+moldura do campo fica vermelha e a mensagem aparece embaixo dele; ao salvar, uma caixa vermelha no
+topo lista todas as pendências ("Corrija N pendências antes de salvar a Ordem de Serviço:"), que é o
+FA-11A.1. Quilometragem só aceita números e ponto; o prazo só aceita números e "/" e pode ser digitado
+sem barras (ddmmaaaa). O "Salvar rascunho" cobra só o que o rascunho grava (orçamento, prazo,
+quilometragem e técnico). O "Incluir item" pede serviço, quantidade e valor num formulário só, com a
+mesma validação, e a justificativa é obrigatória.
 
 O ponto central desta classe: **ela não tem nenhuma linha de SQL e não importa nenhuma DAO**. O único
 objeto de outra camada que ela cria é a controladora:
@@ -451,7 +469,7 @@ INSERTs e de um JOIN na leitura, que é o preço pago aqui.
 |---|---|---|
 | **FA-02** Sem orçamento aprovado | `carregarOrcamentosAprovados()` | "Nenhum orçamento aprovado disponível para abertura de Ordem de Serviço" |
 | **FA-09** Sem técnico habilitado | `aoTrocarSegmento()` | "Não há técnico habilitado disponível para este segmento" |
-| **FA-11A** Campo obrigatório pendente | `catch (IllegalArgumentException)` | A mensagem do `validar()` correspondente |
+| **FA-11A** Campo obrigatório pendente | `validarCampos()` na tela; depois, `catch (IllegalArgumentException)` | Caixa "Corrija N pendências…" e a mensagem embaixo de cada campo; se passar pela tela, a mensagem do `validar()` |
 | **FA-11B** Inclusão de item não previsto | `incluirItemOrdemServico()` + `registrarOSComAlteracao()` | Exigência de justificativa, novo total e aviso de suspensão |
 | **FA-11C** Salvar rascunho | `salvarRascunhoOS()` | "Ordem de Serviço salva como rascunho" |
 | **FA-12** Base de dados indisponível | `catch (SQLException)` | "Não foi possível registrar a Ordem de Serviço. Tente novamente." |
@@ -642,8 +660,9 @@ No Linux e no macOS, troque a `\` por `/` e o `;` do classpath por `:`.
 
 1. A janela abre já com o nº da OS (`OS-2026-0001`), a data de hoje e o orçamento `ORC-2026-0231`
    selecionado. Cliente, veículo e os três itens aparecem preenchidos, com o total R$ 750,00.
-2. Clique em **Salvar Ordem de Serviço** sem preencher nada: aparece *"Informe a quilometragem atual
-   do veículo."* — é o **FA-11A**, e o banco nem foi acessado.
+2. Clique em **Salvar Ordem de Serviço** sem preencher nada: a caixa vermelha do topo lista as cinco
+   pendências (prazo, quilometragem e os três campos de Módulos), e cada campo fica marcado. É o
+   **FA-11A**, e o banco nem foi acessado.
 3. Preencha Quilometragem `120450`, Prazo `02/09/2026`, os três campos de Módulos e clique em
    **Salvar**: aparece *"Ordem de Serviço OS-2026-0001 registrada com sucesso"* e a OS impressa.
 4. Repare que o orçamento `ORC-2026-0231` **sumiu da lista** — é a **POS-02** e a **RN-01**.

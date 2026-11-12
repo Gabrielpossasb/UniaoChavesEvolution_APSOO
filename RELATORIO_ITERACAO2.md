@@ -178,30 +178,30 @@ A ordem 1.1 → 1.2 → 1.7 → salvar é verificada em tempo de execução por
 
 | Mensagem do DSS | Operação | Ctrl | Tela (chamada) |
 |---|---|---|---|
-| Normal 1 | `iniciarOrcamento(): Orcamento` | 180 | 1054 |
-| Normal 3 / Alt. 2 | `informarCliente(origemAtendimento, cpfCnpjCliente): Cliente` | 211 | 1093 |
-| Alt. 4 (FA-02) | `cadastrarCliente(nome, telefone): Cliente` | 253 | 2207 |
-| Normal 5 | `selecionarVeiculo(placa): Veiculo` | 268 | 1342 |
-| Alt. 6 (FA-04) | `cadastrarVeiculo(placa, marca, modelo, anoModelo, motorizacao, numeroChassi): Veiculo` | 286 | 2287 |
-| Normal 7 | `informarSegmento(segmento): List<ServicoBase>` | 311 | 1461, 1733 |
-| Normal 9 (V1) | `informarDadosModulo(tipoModulo, modeloECU, identificacaoModulo, sintomaRelatado): List<Orcamento>` | 332 | 1528 |
-| Variantes 2 (FAV-8.1) | `informarIdentificacaoIlegivel(tipoModulo, sintomaRelatado)` | 352 | 1518 |
-| Variantes 4 (FAV-8.1) | `informarDescricaoModulo(registroFotografico, descricaoFisicaPlaca): List<Orcamento>` | 367 | 1521 |
-| Variantes 6 (FAV-8.2) | `informarDiagnosticoPendente()` | 379 | 1534, 1591 |
-| Normal 11 / Var. 13, 15 (V2, FAV-8.4B) | `informarDadosChaves(…6 parâmetros…): String` | 392 | 1648 |
-| Variantes 9 (FAV-8.4A) | `informarComprovacaoPropriedade(documentoPropriedade, nomeSolicitante, documentoSolicitante): ServicoBase` | 420 | 1703 |
-| Normal 13 / Alt. 8 / Var. 11 | `incluirItem(idServicoBase, valorProposto): double` | 441 | 1775 |
-| Alt. 10 (FA-11A) | `removerItem(idItem): double` | 465 | 1827 |
-| Alt. 12 (FA-11B) | `alterarValorItem(idItem, novoValorProposto): double` | 475 | 1864 |
-| Normal 15 / Alt. 14 | `registrarOrcamento(dataValidade, observacoes): Orcamento` | 492 | 1905 |
-| Alt. 16 (FA-12D) | `salvarRascunhoOrcamento(observacoes)` | 581 | 2069 |
-| Alt. 18 (FA-00) | `solicitarConfirmacaoDesistencia(): String` | 648 | 2098 |
-| Alt. 20 (FA-00) | `descartarOrcamento(): List<Orcamento>` | 656 | 2104 (e 2078, FA-12D) |
-| Alt. 21 `continuarEditando()` | Técnico → Interface, sem mensagem ao Sistema | — | 2101 |
-| (acréscimo) "listaVeiculos" de Normal 3 | `consultarVeiculosVinculados()` | 671 | 1316 |
-| (acréscimo) lista de clientes da busca do mockup | `consultarClientes(trecho)` | 683 | 1213 |
-| (acréscimo) módulos já registrados do veículo | `consultarModulosDoVeiculo()` | 692 | 1254 |
-| (acréscimo) "historicoTecnico" de Normal 5 | `consultarHistoricoTecnico()` | 706 | 1377 |
+| Normal 1 | `iniciarOrcamento(): Orcamento` | 180 | 1046 |
+| Normal 3 / Alt. 2 | `informarCliente(origemAtendimento, cpfCnpjCliente): Cliente` | 211 | 1085 |
+| Alt. 4 (FA-02) | `cadastrarCliente(nome, telefone): Cliente` | 253 | 2193 |
+| Normal 5 | `selecionarVeiculo(placa): Veiculo` | 268 | 1334 |
+| Alt. 6 (FA-04) | `cadastrarVeiculo(placa, marca, modelo, anoModelo, motorizacao, numeroChassi): Veiculo` | 286 | 2273 |
+| Normal 7 | `informarSegmento(segmento): List<ServicoBase>` | 311 | 1453, 1725 |
+| Normal 9 (V1) | `informarDadosModulo(tipoModulo, modeloECU, identificacaoModulo, sintomaRelatado): List<Orcamento>` | 332 | 1520 |
+| Variantes 2 (FAV-8.1) | `informarIdentificacaoIlegivel(tipoModulo, sintomaRelatado)` | 352 | 1510 |
+| Variantes 4 (FAV-8.1) | `informarDescricaoModulo(registroFotografico, descricaoFisicaPlaca): List<Orcamento>` | 367 | 1513 |
+| Variantes 6 (FAV-8.2) | `informarDiagnosticoPendente()` | 379 | 1526, 1583 |
+| Normal 11 / Var. 13, 15 (V2, FAV-8.4B) | `informarDadosChaves(…6 parâmetros…): String` | 392 | 1640 |
+| Variantes 9 (FAV-8.4A) | `informarComprovacaoPropriedade(documentoPropriedade, nomeSolicitante, documentoSolicitante): ServicoBase` | 420 | 1695 |
+| Normal 13 / Alt. 8 / Var. 11 | `incluirItem(idServicoBase, valorProposto): double` | 441 | 1767 |
+| Alt. 10 (FA-11A) | `removerItem(idItem): double` | 465 | 1819 |
+| Alt. 12 (FA-11B) | `alterarValorItem(idItem, novoValorProposto): double` | 475 | 1856 |
+| Normal 15 / Alt. 14 | `registrarOrcamento(dataValidade, observacoes): Orcamento` | 492 | 1897 |
+| Alt. 16 (FA-12D) | `salvarRascunhoOrcamento(observacoes)` | 581 | 2061 |
+| Alt. 18 (FA-00) | `solicitarConfirmacaoDesistencia(): String` | 648 | 2088 |
+| Alt. 20 (FA-00) | `descartarOrcamento(): List<Orcamento>` | 656 | 2094 (e 2070, FA-12D) |
+| Alt. 21 `continuarEditando()` | Técnico → Interface, sem mensagem ao Sistema | — | 2091 |
+| (acréscimo) "listaVeiculos" de Normal 3 | `consultarVeiculosVinculados()` | 671 | 1308 |
+| (acréscimo) lista de clientes da busca do mockup | `consultarClientes(trecho)` | 683 | 1205 |
+| (acréscimo) módulos já registrados do veículo | `consultarModulosDoVeiculo()` | 692 | 1246 |
+| (acréscimo) "historicoTecnico" de Normal 5 | `consultarHistoricoTecnico()` | 706 | 1369 |
 
 ### 4.3 Diagrama de comunicação da 1ª iteração: `registrarOrdemServico`
 
@@ -306,7 +306,7 @@ escrita por mim.
 | D15 | Não se troca o segmento com serviços já incluídos | Apagar os itens silenciosamente |
 | D16 | PRE-01: usuário logado pelo argumento da linha de comando (padrão: 1, Gabriel Abraão, o do mockup). Só Técnico de Módulos e Técnico de Chaves abrem o caso de uso: no diagrama de casos de uso o Administrador não está ligado ao "Solicitar Orçamento" e não há generalização dele para os técnicos (corrigido na rodada 3; antes o Administrador era aceito) | Tela de login: não especificada. Aceitar o Administrador por analogia com a 1ª iteração: contraria o diagrama de casos de uso e a PRE-01 |
 | D17 | Rascunho exige cliente, veículo e segmento (FKs e tabela da subclasse do MOR); não consome número; a listagem do FA-12D usa `descartarOrcamento()`, que encerra a sessão | Gravar rascunho sem cliente: o MOR não permite |
-| D18 | Depois de registrar, salvar rascunho ou desistir, o formulário reabre para um novo orçamento; o "X" da janela pede a confirmação do FA-00 e fecha | Fechar a aplicação em todos os casos |
+| D18 | Depois de registrar ou salvar rascunho, o formulário reabre para um novo orçamento. Desistir (FA-00) fecha a tela, porque o FA-00.5 encerra o caso de uso. O "X" da janela não faz nada: o único jeito de sair é "Voltar / Desistir" (rodada 8; antes o "X" pedia a confirmação do FA-00 e desistir reabria o formulário) | Fechar a aplicação em todos os casos |
 | D19 | Look and feel Metal (multiplataforma) só na tela nova, para as cores e bordas do mockup saírem iguais em Windows e Linux. A 1ª iteração continua com o do sistema | System LAF: no Windows ignora fundos e bordas customizados de botões |
 | D20 | Os selos "PASSOS 1 · 12", "V1 · PASSOS 7.1-8.3"… e os cabeçalhos "Tela 2 — …" do mockup **não** aparecem: são anotações do documento, não elementos da tela | Desenhá-los na interface |
 | D21 | Listas das combos (tipos de módulo, modelos de ECU, tipos de chave, situações do imobilizador, marcas) inventadas como sugestão; as combos são **editáveis** e aceitam qualquer texto | Listas fechadas ou catálogo novo |
@@ -553,8 +553,8 @@ como o `MainRegistrarOrdemServico`. Ele fica no pacote raiz, não em `view`, e n
   usuários. Nenhum método foi acrescentado à DAO, e a auditoria de assinaturas segue com 0
   divergências.
 - **Botões:** "Solicitar Orçamento" e "Registrar Ordem de Serviço". O menu se esconde enquanto a tela
-  está aberta e volta quando ela fecha, por Voltar/Cancelar, Desistir ou pelo "X" do Solicitar
-  Orçamento. Cada tela abre com o mesmo look and feel do seu `MainRegistrarOrdemServico`.
+  está aberta e volta quando ela fecha, por Voltar/Cancelar ou Desistir (até a rodada 8, também pelo
+  "X" do Solicitar Orçamento). Cada tela abre com o mesmo look and feel do seu `MainRegistrarOrdemServico`.
 - **Diagnóstico de conexão:** o menu diz se o banco conectou. Quando falha, mostra a causa provável no
   XAMPP (MySQL desligado, banco não importado, senha do root, schema antigo ou driver ausente) junto
   com a mensagem original do driver, e tem o botão "Tentar conectar de novo".
@@ -656,3 +656,136 @@ histórico e confere 7 coisas: cada linha do bloco do módulo aparece igual na j
 outro módulo aparece na janela e não no bloco, e as OS aparecem abaixo. A captura está em
 `docs/telas-iteracao2/tela2-historico-tecnico.png`. Total: 167 verificações de interface e 69 sem
 interface, sem falhas.
+
+### 10.8 Rodada 8 (11/11/2026): "Incluir item" na seção da OS e telas sem fechar pelo "X"
+
+**Pedido:** *"Na parte de ordem de servico, quero que o botao de adicionar items esteja na secao dele
+e nao a parte de baixo junto com os outros, e quero que na tela de orcamento e de ordem de servico,
+nao de para fechar pelo x e so pelo botao de cancelar."*
+
+| Onde | Antes | Depois |
+|---|---|---|
+| `TelaRegistrarOrdemServico`, botão "Incluir item" (FA-11B) | no rodapé, entre "Voltar / Cancelar" e "Salvar rascunho" | na seção EXECUÇÃO, abaixo da tabela de itens, na mesma linha do "Valor total da OS". O rodapé ficou com Voltar / Cancelar, Salvar rascunho, Imprimir OS e Salvar Ordem de Serviço |
+| `TelaRegistrarOrdemServico`, "X" da janela | já não fazia nada (`DO_NOTHING_ON_CLOSE` sem tratador) | igual; só ganhou um comentário dizendo que é de propósito |
+| `TelaSolicitarOrcamento`, "X" da janela | pedia a confirmação do FA-00 e fechava | não faz nada: o tratador `windowClosing` foi removido |
+| `TelaSolicitarOrcamento`, "Voltar / Desistir" | confirmada a desistência, mostrava a lista e **reabria** um orçamento novo | confirmada a desistência, mostra a lista e **fecha a tela** (FA-00.5, "Encerrar caso de uso"). Sem isso, com o "X" desativado, a tela não teria como ser fechada. `desistir(boolean fecharJanela)` virou `desistir()` |
+
+**Fidelidade:** a ordem das mensagens do FA-00 não mudou (`solicitarConfirmacaoDesistencia` →
+`descartarOrcamento`), nem a controladora, as DAOs ou o diagrama de classes (as telas não têm membros
+no diagrama). Registrar e salvar rascunho continuam reabrindo o formulário (D18). Auditorias: 0
+divergências de assinatura e 0 de ordem. Linhas das tabelas 4.1-4.3 recalculadas.
+
+**Testes:** o cenário `desistencia` agora envia o evento de fechamento da janela e confere que a tela
+continua aberta e com os dados (2 verificações novas), e no fim confere que a tela foi fechada, no
+lugar de "formulário descartado". Rodados todos os cenários de interface, menos o `falhaDeGravacao`
+(precisa de `sudo` para parar o MariaDB): 166 verificações, sem falhas. Sem interface: 69
+verificações, sem falhas.
+
+### 10.9 Rodada 9 (11/11/2026): validação dos campos no Registrar OS e "Incluir item" no topo da Execução
+
+**Pedido:** *"agora a mesma verificacao de campos, dos erros e validadoes, ao enviar a os e ao tirar o
+focus do botao, da mesma forma que foi feito no registar orcamento, agora na registrar orgem de
+servico. O botao de incluir item na ordem de servioc quero que fique no canto superior direito da aba
+de execucao."*
+
+**Antes:** a `TelaRegistrarOrdemServico` não validava nada ao perder o foco. Ao salvar, mostrava só a
+**primeira** exceção do `validar()` num `JOptionPane` (ex.: "Informe a quilometragem atual do
+veículo."). Quilometragem e prazo aceitavam qualquer caractere. O "Incluir item" abria três caixas de
+texto seguidas e só acusava erro no fim.
+
+**Depois:** o mesmo padrão do Solicitar Orçamento (seção 5), com uma classe interna `Campo` na tela:
+
+| Campo | Regra | Mensagem |
+|---|---|---|
+| Orçamento associado * | selecionado | "Selecione o orçamento que originará a Ordem de Serviço." |
+| Prazo estimado * | obrigatório; só dígitos e "/" (máx. 10); dd/mm/aaaa ou ddmmaaaa (as barras são postas ao perder o foco); data que existe; ≥ data de abertura | "Campo obrigatório." / "Informe uma data válida no formato dd/mm/aaaa." / "O prazo estimado não pode ser anterior à data de abertura." |
+| Quilometragem * | obrigatório; só dígitos e "." (máx. 9); 85400 ou 85.400; > 0 | "Campo obrigatório." / "Informe a quilometragem só com números (ex.: 85.400)." / "Informe uma quilometragem maior que zero." |
+| Sintomas relatados *, Condição de recebimento *, Diagnóstico em bancada * (V1, RN-03) | obrigatórios no segmento Módulos; ≤ 255 | inline "Campo obrigatório."; caixa "<Campo>: campo obrigatório para o segmento Módulos." |
+| Serviço de chaves a executar * (V2, RN-03) | obrigatório no segmento Chaves; ≤ 255 | idem, "…para o segmento Chaves." |
+| Técnico responsável * | selecionado (vazio no FA-09) | "Selecione o técnico responsável pela Ordem de Serviço." |
+| Observações internas | opcional; ≤ 255 | "Máximo de 255 caracteres." |
+| Caixa de pendências (FA-11A.1) | no topo do formulário, ao salvar | "Corrija N pendências antes de salvar a Ordem de Serviço:" + "• Campo: mensagem" |
+| Incluir item: Serviço ou peça *, Quantidade *, Valor unitário (R$) * (FA-11B.1) | num formulário só; quantidade só dígitos (máx. 4), > 0; valor no formato brasileiro, > 0 | "Campo obrigatório." / "Informe uma quantidade maior que zero." / "Informe um valor válido (ex.: 120,00 ou 1.250,00)." / "Informe um valor maior que zero." |
+| Justificativa da alteração * (FA-11B.3, RN-05) | obrigatória; ≤ 255 | "Campo obrigatório." |
+
+- **(a) ao perder o foco:** cada campo digitável valida e marca a moldura de vermelho, com a mensagem
+  embaixo. Trocar de segmento apaga as marcas dos campos do outro segmento.
+- **(b) ao salvar:** `validarCampos()` revalida o formulário inteiro e, com pendências, não chama a
+  controladora. Os dados ficam preservados (FA-11A.3). O `validar()` do negócio continua valendo
+  depois disso.
+- **Salvar rascunho (FA-11C):** cobra só orçamento, prazo, quilometragem, técnico e observações, que
+  é o que `salvarRascunhoOS` grava. Os dados técnicos ficam para quando o rascunho for retomado
+  (FA-11C.3, "a partir do passo 7").
+- **Diálogos do FA-11B:** só fecham no OK com tudo válido. Com erro, voltam com o que foi digitado e as
+  marcas.
+- **Borda vermelha numa moldura em volta do campo:** esta tela usa o look and feel do sistema
+  (D19), que pode ignorar a borda e o fundo do próprio `JTextField`.
+
+**Layout:**
+- "Incluir item" está no **canto superior direito da seção EXECUÇÃO**, na linha do título. Na rodada
+  8 ele estava abaixo da tabela.
+- O formulário passou a acompanhar a largura da janela (`PainelLarguraDaJanela`, como no Solicitar
+  Orçamento). O texto "Campos exigidos no segmento…" quebra a linha. Isso acabou com a rolagem
+  horizontal, que cortava o "Valor total da OS" e esconderia o botão novo.
+
+**Escrito por mim:** a regra "prazo ≥ data de abertura" e todas as mensagens acima, exceto as de
+orçamento, técnico e justificativa, que já existiam na controladora e no negócio.
+
+**Fidelidade:** a controladora, o negócio e as DAOs não mudaram. A ordem das mensagens do diagrama de
+comunicação (4.3) e do DSS da 1ª iteração é a mesma: a tela só deixa de chamar
+`registrarOrdemServico` enquanto houver pendência. Auditorias: 0 divergências de assinatura e 0 de
+ordem. `DOCUMENTACAO.md` e `RASTREABILIDADE.md` da 1ª iteração atualizados (32 links de linha da tela
+recalculados).
+
+**Verificação:** não há teste automatizado de interface para o Registrar OS. Um roteiro descartável
+abriu a tela real e conferiu 27 pontos, sem gravar nada no banco:
+- sem rolagem horizontal; botão fora do rodapé, acima do técnico e encostado à direita;
+- filtros de digitação ("12a3.4b" vira "123.4");
+- mensagens ao perder o foco (quilometragem inválida e zero, 31/02, prazo antes da abertura,
+  "15122027" vira "15/12/2027", sintoma em branco) e a marca sumindo com valor válido;
+- a caixa com as 5 pendências ao salvar e as 2 do rascunho;
+- a troca de segmento limpando as marcas;
+- o diálogo "Incluir item" voltando com "Campo obrigatório." no serviço.
+
+A bateria sem interface (`TesteControladoras`) continua passando.
+
+### 10.10 Rodada 10 (11/11/2026): ordem dos campos da Identificação da OS
+
+**Pedido:** *"na tela de os, quero inverter os 2 primeiros campos, orcamento associado ser o primeiro,
+e o numero da os o segundo."*
+
+**Mudança:** na seção IDENTIFICAÇÃO DA OS da `TelaRegistrarOrdemServico`, a ordem passou a ser
+Orçamento associado → Nº da OS → Data de abertura → Prazo estimado → Situação. As larguras foram
+trocadas junto, para o combo do orçamento continuar mais largo. Agora a primeira coisa da tela é o
+que o Administrador escolhe no passo 3. Só o layout mudou: nada de controladora, negócio, DAO ou
+ordem de mensagens. `DOCUMENTACAO.md` atualizado. Nenhuma linha mudou de número.
+
+### 10.11 Rodada 11 (11/11/2026): estilo dos botões do Registrar OS conforme o mockup
+
+**Pedido:** *"alguns botoes da tela de ordem de servico nao estao seguindo o mockup em questao de
+estilo, verifique o mockup e aplique o estilo nos botoes."*
+
+**Comparação com `MOCKUP-registrar-ordem-de-servico.pdf`:**
+
+| Botão | Mockup | Antes | Depois |
+|---|---|---|---|
+| Salvar Ordem de Serviço | azul cheio, texto branco em negrito | azul sem arredondamento; no GTK, cinza | igual ao mockup |
+| Imprimir OS | branco, borda e texto azuis, ícone de impressora | botão padrão do sistema, sem ícone | igual ao mockup, com ícone desenhado (`IconeImpressora`) |
+| Voltar / Cancelar | branco, borda cinza-clara, texto escuro em negrito | botão padrão do sistema | igual ao mockup |
+| Ver atendimentos anteriores | azul-claro, borda azul-clara, texto azul em negrito | botão padrão do sistema | igual ao mockup |
+| Salvar rascunho (não está no mockup) | — | botão padrão do sistema | como o Voltar / Cancelar |
+| Incluir item (não está no mockup) | — | botão padrão do sistema | "+ Incluir item", como o Imprimir OS |
+
+Todos têm cantos arredondados, cursor de mão, cor um pouco mais escura ao passar o mouse e ao
+pressionar, e aparência apagada quando desabilitados (FA-02). Os botões são desenhados pela classe
+interna `Botao`, porque o Registrar OS usa o look and feel do sistema (D19), que ignora fundo e
+arredondamento de `JButton`. As capturas foram conferidas no Metal e no GTK.
+
+**Fidelidade:** só a aparência mudou. Controladora, negócio, DAOs e ordem das mensagens ficaram como
+estavam. Auditorias: 0 divergências. `DOCUMENTACAO.md` atualizado e 33 links de linha do
+`RASTREABILIDADE.md` recalculados.
+
+**Visto de passagem, sem mudança:** o mockup mostra "Ver 3 atendimentos anteriores", com a contagem,
+e a tela mostra "Ver atendimentos anteriores". No segmento Chaves, o bloco de dados técnicos tem
+espaço vazio porque o `CardLayout` reserva a altura do bloco de Módulos.
+

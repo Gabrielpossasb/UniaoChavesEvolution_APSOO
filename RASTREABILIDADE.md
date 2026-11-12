@@ -211,7 +211,7 @@ falam sempre "o Administrador".
 
 ### 4.1 As cores, extraídas em hexadecimal
 
-[Linhas 57-63](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L57-L63):
+[Linhas 79-85](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L79-L85):
 
 ```java
 private static final Color AZUL_CABECALHO = new Color(0x1E, 0x3A, 0x8A);
@@ -223,7 +223,7 @@ O comentário acima diz "Cores tiradas do mockup". Cada constante tem nome de fu
 
 ### 4.2 As cinco seções, na ordem
 
-[Linhas 161-169](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L161-L169) são o mockup
+[Linhas 228-236](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L228-L236) são o mockup
 lido de cima para baixo:
 
 ```java
@@ -236,16 +236,16 @@ conteudo.add(criarSecaoExecucao());
 
 | Seção do mockup | Método |
 |---|---|
-| IDENTIFICAÇÃO DA OS | [criarSecaoIdentificacao():210](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L210) |
-| CLIENTE E VEÍCULO | [criarSecaoClienteVeiculo():227](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L227) |
-| SEGMENTO DO SERVIÇO | [criarSecaoSegmento():246](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L246) |
-| DADOS TÉCNICOS | [criarSecaoDadosTecnicos():290](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L290) |
-| EXECUÇÃO | [criarSecaoExecucao():347](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L347) |
+| IDENTIFICAÇÃO DA OS | [criarSecaoIdentificacao():277](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L277) |
+| CLIENTE E VEÍCULO | [criarSecaoClienteVeiculo():294](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L294) |
+| SEGMENTO DO SERVIÇO | [criarSecaoSegmento():313](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L313) |
+| DADOS TÉCNICOS | [criarSecaoDadosTecnicos():357](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L357) |
+| EXECUÇÃO | [criarSecaoExecucao():412](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L412) |
 
 ### 4.3 Os textos, copiados sem reescrever
 
 O aviso amarelo da seção de segmento, em
-[linhas 268-269](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L268-L269):
+[linhas 335-336](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L335-L336):
 
 ```java
 JLabel atencao = new JLabel("Atenção: a seleção do segmento determina os campos técnicos "
@@ -253,7 +253,7 @@ JLabel atencao = new JLabel("Atenção: a seleção do segmento determina os cam
 ```
 
 E até a nota de rodapé em itálico
-([linha 154](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L154)): *"Campos marcados com *
+([linha 218](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L218)): *"Campos marcados com *
 são de preenchimento obrigatório."* Os rótulos trazem o asterisco um por um:
 `"Prazo estimado * (dd/mm/aaaa)"`, `"Quilometragem *"`.
 
@@ -279,7 +279,7 @@ Dois pontos, resolvidos em favor do Diagrama de Classes:
 - **"Tipo de módulo", "Fabricante", "Nº da peça"** parecem campos da OS no mockup, mas no Diagrama de
   Classes são atributos do **`Veiculo`**. Por isso a tela os exibe com `criarCampoSomenteLeitura()` e
   os preenche em
-  [preencherClienteVeiculo():522-526](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L522-L526).
+  [preencherClienteVeiculo():735-739](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L735-L739).
 - **"CPF / CNPJ"** existe no mockup e **não** foi implementado: `Cliente` tem só `nome` e `telefone`.
   Registrado como lacuna 8 na seção 7 do [DOCUMENTACAO.md](DOCUMENTACAO.md).
 
@@ -311,19 +311,19 @@ a lista, e se vier vazia, é o FA-02. A pré-condição e o fluxo alternativo s�
 |---|---|
 | 1. Formulário com nº da OS e data (RN-07) | [iniciarRegistroOS():52](src/uniaoevolutions/controle/ControladoraRegistrarOS.java#L52) → [gerarNumeroOS():61](src/uniaoevolutions/persistencia/OrdemServicoDAO.java#L61) |
 | 2. Lista de orçamentos aprovados (RN-01) | [consultarOrcamentosAprovados():67](src/uniaoevolutions/controle/ControladoraRegistrarOS.java#L67) |
-| 3. Seleciona o orçamento | [aoSelecionarOrcamento():477](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L477) + [selecionarOrcamento():362](src/uniaoevolutions/controle/ControladoraRegistrarOS.java#L362) |
-| 4. Exibe cliente, veículo, segmento e itens (RN-02) | [consultarOrcamento():72](src/uniaoevolutions/controle/ControladoraRegistrarOS.java#L72) + [preencherClienteVeiculo():512](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L512) + [preencherItens():530](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L530) |
-| 5. Informa o segmento | Os dois `JRadioButton` ([linhas 88-91](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L88-L91)), pré-marcados em [496-500](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L496-L500) |
-| 6. Exibe o bloco técnico do segmento | [consultarBlocosDadosTecnicos():81](src/uniaoevolutions/controle/ControladoraRegistrarOS.java#L81) + `cartoes.show()` em [556](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L556) |
-| 7. Quilometragem e prazo estimado | `campoQuilometragem`, `campoPrazoEstimado`; lidos em [766-782](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L766-L782) |
+| 3. Seleciona o orçamento | [aoSelecionarOrcamento():690](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L690) + [selecionarOrcamento():362](src/uniaoevolutions/controle/ControladoraRegistrarOS.java#L362) |
+| 4. Exibe cliente, veículo, segmento e itens (RN-02) | [consultarOrcamento():72](src/uniaoevolutions/controle/ControladoraRegistrarOS.java#L72) + [preencherClienteVeiculo():725](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L725) + [preencherItens():743](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L743) |
+| 5. Informa o segmento | Os dois `JRadioButton` ([linhas 130-133](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L130-L133)), pré-marcados em [709-713](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L709-L713) |
+| 6. Exibe o bloco técnico do segmento | [consultarBlocosDadosTecnicos():81](src/uniaoevolutions/controle/ControladoraRegistrarOS.java#L81) + `cartoes.show()` em [769](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L769) |
+| 7. Quilometragem e prazo estimado | `campoQuilometragem`, `campoPrazoEstimado`; lidos em [1030-1046](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L1030-L1046) |
 | 8. Dados técnicos obrigatórios (RN-03) | Bloco V1 ou V2; validados em [OrdemDeServicoModulos.validar():43](src/uniaoevolutions/negocio/OrdemDeServicoModulos.java#L43) / [OrdemDeServicoChaves.validar():34](src/uniaoevolutions/negocio/OrdemDeServicoChaves.java#L34) |
 | 9. Lista de técnicos habilitados (RN-04) | [consultarTecnicosHabilitados():99](src/uniaoevolutions/controle/ControladoraRegistrarOS.java#L99) |
-| 10. Seleciona o técnico responsável | `comboTecnico` ([linha 110](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L110)) |
+| 10. Seleciona o técnico responsável | `comboTecnico` ([linha 153](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L153)) |
 | 11. Observações e confirma | `campoObservacoes` + botão **Salvar Ordem de Serviço** |
-| 12. Mensagem de sucesso e exibe a OS | [salvar():575](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L575) + [mostrarOrdemRegistrada():828](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L828) |
+| 12. Mensagem de sucesso e exibe a OS | [salvar():797](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L797) + [mostrarOrdemRegistrada():1154](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L1154) |
 
 O texto do passo 12 está **literal** em
-[linha 595](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L595):
+[linha 820](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L820):
 
 ```java
 "Ordem de Serviço " + os.getNumeroOS() + " registrada com sucesso"
@@ -356,13 +356,13 @@ em `0001` sozinha.
 
 | Fluxo | Onde | Observação |
 |---|---|---|
-| **FA-00** Desistência | [cancelar():681](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L681) + [solicitarConfirmacaoDesistencia():336](src/uniaoevolutions/controle/ControladoraRegistrarOS.java#L336) + [descartarRegistro():344](src/uniaoevolutions/controle/ControladoraRegistrarOS.java#L344) | O FA-00.4 "mantendo o orçamento em sua situação original" é cumprido por **não fazer nada**: nada foi gravado, basta soltar as referências |
-| **FA-02** Sem orçamento aprovado | [carregarOrcamentosAprovados():460-469](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L460-L469) | Desabilita os botões de gravação |
-| **FA-09** Sem técnico habilitado | [aoTrocarSegmento():565-568](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L565-L568) | |
-| **FA-11A** Campo obrigatório pendente | `catch (IllegalArgumentException)` → [mostrarAviso():879](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L879) | A mensagem vem do `validar()`; o FA-11A.3 "preservando os dados já informados" é automático — a tela não é limpa |
-| **FA-11B** Item não previsto | [incluirItem():636](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L636) → os dois métodos da controladora | É o único fluxo que **encerra sem registrar a OS** (FA-11B.5, [linha 672](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L672)) |
+| **FA-00** Desistência | [cancelar():945](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L945) + [solicitarConfirmacaoDesistencia():336](src/uniaoevolutions/controle/ControladoraRegistrarOS.java#L336) + [descartarRegistro():344](src/uniaoevolutions/controle/ControladoraRegistrarOS.java#L344) | O FA-00.4 "mantendo o orçamento em sua situação original" é cumprido por **não fazer nada**: nada foi gravado, basta soltar as referências |
+| **FA-02** Sem orçamento aprovado | [carregarOrcamentosAprovados():673-682](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L673-L682) | Desabilita os botões de gravação |
+| **FA-09** Sem técnico habilitado | [aoTrocarSegmento():781-784](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L781-L784) | |
+| **FA-11A** Campo obrigatório pendente | Na tela: [validarCampos():600](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L600) marca cada campo e lista as pendências na caixa do topo (FA-11A.1); cada campo também valida ao perder o foco. Depois, no negócio: `catch (IllegalArgumentException)` → [mostrarAviso():1205](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L1205) com a mensagem do `validar()` | A tela confere formato e obrigatoriedade antes de chamar a controladora; o `validar()` continua sendo a garantia das RN-03 e RN-04. O FA-11A.3 "preservando os dados já informados" é automático: a tela não é limpa |
+| **FA-11B** Item não previsto | [incluirItem():868](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L868) → os dois métodos da controladora | É o único fluxo que **encerra sem registrar a OS** (FA-11B.5, [linha 936](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L936)) |
 | **FA-11C** Salvar rascunho | [salvarRascunhoOS():299](src/uniaoevolutions/controle/ControladoraRegistrarOS.java#L299) | O "sem número definitivo" é a coluna `numeroOS` aceitando `NULL` ([schema.sql:161](sql/schema.sql#L161)) |
-| **FA-12** Base de dados indisponível | `catch (SQLException)` → [mostrarErroDeBanco():884](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L884) | |
+| **FA-12** Base de dados indisponível | `catch (SQLException)` → [mostrarErroDeBanco():1210](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L1210) | |
 
 O FA-11C deixou marca até no banco. O comentário de
 [schema.sql:188-191](sql/schema.sql#L188-L191) explica:
@@ -384,7 +384,7 @@ coisas:
 |---|---|---|
 | Classe instanciada | `OrdemDeServicoModulos` | `OrdemDeServicoChaves` |
 | Tabela filha | `TB_OrdemDeServicoModulos` | `TB_OrdemDeServicoChaves` |
-| Cartão do `CardLayout` | [criarBlocoModulos():308](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L308) | [criarBlocoChaves():331](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L331) |
+| Cartão do `CardLayout` | [criarBlocoModulos():381](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L381) | [criarBlocoChaves():398](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L398) |
 | Campos exigidos (RN-03) | [consultarBlocosDadosTecnicos():88-93](src/uniaoevolutions/controle/ControladoraRegistrarOS.java#L88-L93) | [:84-86](src/uniaoevolutions/controle/ControladoraRegistrarOS.java#L84-L86) |
 | Técnicos listados | `tecnicoDeModulos` + administrador | `tecnicoDeChaves` + administrador |
 
@@ -619,7 +619,7 @@ Os números do diagrama estão também **nos destinos** das mensagens, cada um n
 
 | Objeto do diagrama | Classe |
 |---|---|
-| `:Interface` | `TelaRegistrarOrdemServico` — dito em [linha 47](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L47) |
+| `:Interface` | `TelaRegistrarOrdemServico` — dito em [linha 69](src/uniaoevolutions/view/TelaRegistrarOrdemServico.java#L69) |
 | `:Sistema` | `ControladoraRegistrarOS` — dito em [linha 23](src/uniaoevolutions/controle/ControladoraRegistrarOS.java#L23) |
 | `orc`, `vei`, `tec`, `os` | as variáveis locais, com **os mesmos nomes** |
 

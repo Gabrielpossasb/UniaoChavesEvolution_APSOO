@@ -717,6 +717,11 @@ public class TesteTelaSolicitarOrcamento {
     void desistencia() throws Exception {
         abrir(1);
         preencherCabecalhoMarcos(emDias(5));
+        // O "X" da janela não fecha nem pergunta nada: só o botão Voltar / Desistir.
+        naEdt(() -> tela.dispatchEvent(new java.awt.event.WindowEvent(tela, java.awt.event.WindowEvent.WINDOW_CLOSING)));
+        sincronizar();
+        verificar(naEdt(tela::isDisplayable), "o X da janela não fecha a tela");
+        verificarIgual("Marcos Antônio Ribeiro", texto(tela, "campoCliente"), "o X da janela não descarta os dados");
         clicar(tela, "botaoDesistir");
         JDialog confirmacao = esperarDialogo("Desistir deste orçamento?");
         salvarJanela(confirmacao, "tela2-fa00-desistir.png");
@@ -729,7 +734,8 @@ public class TesteTelaSolicitarOrcamento {
         verificarContem("Registro cancelado.", textoDoDialogo(lista), "FA-00.4: listagem de orçamentos");
         verificarContem("ORC-2026-0231", textoDaTabela(lista), "FA-00.4: orçamentos existentes listados");
         clicarNoDialogo(lista, "Fechar");
-        verificarIgual("", texto(tela, "campoCliente"), "FA-00.5: formulário descartado");
+        sincronizar();
+        verificar(!naEdt(tela::isDisplayable), "FA-00.5: a tela é fechada (encerra o caso de uso)");
         verificarIgual(10, BancoDeTeste.contar("SELECT COUNT(*) FROM TB_Orcamento"), "FA-00: nada gravado");
     }
 
