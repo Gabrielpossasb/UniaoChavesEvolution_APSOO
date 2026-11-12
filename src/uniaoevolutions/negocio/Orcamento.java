@@ -2,6 +2,7 @@ package uniaoevolutions.negocio;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -13,16 +14,16 @@ import java.util.List;
 public class Orcamento {
 
     // Situações da 1ª iteração (Registrar OS).
-    /** RN-01 do Registrar OS: exigida para gerar uma OS. */
-    public static final String STATUS_APROVADO = "Aprovado pelo cliente";
+    /** RN-01 do Registrar OS: exigida para gerar uma OS. FA-14 do Solicitar Orçamento. */
+    public static final String STATUS_APROVADO = "Aprovado";
     /** POS-02 do Registrar OS. */
     public static final String STATUS_CONVERTIDO = "Convertido em OS";
-    /** RN-05 do Registrar OS: após alteração de item. */
-    public static final String STATUS_AGUARDANDO = "Aguardando aprovação do cliente";
 
     // Situações do Solicitar Orçamento (RN-06).
-    /** POS-01; mensagem 1.15.2. */
+    /** POS-01; mensagem 1.15.2. RN-05 do Registrar OS: volta a ela após alteração de item. */
     public static final String STATUS_EM_ANALISE = "Em análise";
+    /** FA-14. */
+    public static final String STATUS_RECUSADO = "Recusado";
     /** FA-12D. */
     public static final String STATUS_RASCUNHO = "Rascunho";
 
@@ -99,6 +100,39 @@ public class Orcamento {
     /** Privado (diagrama v2). Mensagem 1.15.2. */
     private void setStatus(String status) {
         this.status = status;
+    }
+
+    /**
+     * FA-14 (mensagem 1.2): decisão do cliente, ator secundário. Só "Em análise" recebe a
+     * decisão; aprovação exige validade não vencida (RN-07). Dispara 1.2.1 setStatus(decisao).
+     */
+    public void registrarDecisao(String decisao) {
+        if (!STATUS_APROVADO.equals(decisao) && !STATUS_RECUSADO.equals(decisao)) {
+            throw new IllegalArgumentException("Informe a decisão do cliente: aprovado ou recusado.");
+        }
+        if (!STATUS_EM_ANALISE.equals(status)) {
+            throw new IllegalArgumentException("Somente orçamento com situação \"" + STATUS_EM_ANALISE
+                    + "\" recebe a decisão do cliente.");
+        }
+        if (STATUS_APROVADO.equals(decisao) && validadeVencida()) {
+            throw new IllegalArgumentException("Orçamento expirado em "
+                    + new SimpleDateFormat("dd/MM/yyyy").format(dataValidade)
+                    + ". Não pode mais ser aprovado.");                         // RN-07
+        }
+        setStatus(decisao);                                                      // 1.2.1
+    }
+
+    /** RN-07: validade anterior a hoje. */
+    private boolean validadeVencida() {
+        if (dataValidade == null) {
+            return false;
+        }
+        Calendar hoje = Calendar.getInstance();
+        hoje.set(Calendar.HOUR_OF_DAY, 0);
+        hoje.set(Calendar.MINUTE, 0);
+        hoje.set(Calendar.SECOND, 0);
+        hoje.set(Calendar.MILLISECOND, 0);
+        return dataValidade.before(hoje.getTime());
     }
 
     /** Mensagem 1.15.3 e RN-05: /valorEstimado = soma dos valores propostos. */

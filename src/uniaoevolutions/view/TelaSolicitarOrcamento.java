@@ -1658,7 +1658,7 @@ public class TelaSolicitarOrcamento extends JFrame {
             boolean novo = servicoAcrescentado == null;
             servicoAcrescentado = servico;
             textoAcrescentado.setText("<html>O procedimento <b>" + servico.getDescricao() + "</b> foi acrescentado "
-                    + "automaticamente por causa da perda total (FAV-8.4A). Informe o valor proposto para ele.</html>");
+                    + "automaticamente por causa da perda total. Informe o valor proposto para ele.</html>");   // FAV-8.4A
             avisoAcrescentado.setVisible(true);
             if (destacar && novo && !servicoIncluido(servico)) {
                 selecionarServico(servico);
@@ -1969,13 +1969,65 @@ public class TelaSolicitarOrcamento extends JFrame {
         iniciarOrcamento();
     }
 
-    /** "Ver orçamento": o orçamento registrado, com situação "Em análise" (passo 13). */
-    private void mostrarDetalhesOrcamento(Orcamento orc) {
+    /**
+     * "Ver orçamento": o orçamento registrado (passo 13) ou aberto pela listagem. FA-14.1-2:
+     * "Em análise" ganha "Cliente recusou" e "Cliente aprovou"; as demais situações, só "Fechar".
+     *
+     * @return o orçamento com a situação atual (a nova, se a decisão foi registrada).
+     */
+    private Orcamento mostrarDetalhesOrcamento(Orcamento orc) {
+        boolean emAnalise = Orcamento.STATUS_EM_ANALISE.equals(orc.getStatus());
+        String[] botoes = emAnalise ? new String[]{"Cliente recusou", "Cliente aprovou", "Fechar"}
+                                    : new String[]{"Fechar"};
+        int escolha = mostrarDialogo(Icone.INFO, "Orçamento " + valorOuTraco(orc.getNumero()),
+                criarCorpoDetalhes(orc), botoes, emAnalise ? 1 : 0, emAnalise ? 0 : -1, null);
+        if (emAnalise && (escolha == 0 || escolha == 1)) {
+            // FA-14.3
+            return registrarDecisaoCliente(orc, escolha == 1 ? Orcamento.STATUS_APROVADO : Orcamento.STATUS_RECUSADO);
+        }
+        return orc;
+    }
+
+    /** FA-14.4 a FA-14.7: confirma, registra e exibe o orçamento com a nova situação. */
+    private Orcamento registrarDecisaoCliente(Orcamento orc, String decisao) {
+        boolean aprovou = Orcamento.STATUS_APROVADO.equals(decisao);
+
+        // FA-14.4
+        JLabel corpo = new JLabel("<html>Cliente: <b>" + orc.getCliente().getNome() + "</b> · Valor estimado: <b>"
+                + Validacoes.formatarMoeda(orc.getValorEstimado()) + "</b></html>");
+        corpo.setFont(corpo.getFont().deriveFont(Font.PLAIN, 13f));
+        String pergunta = String.format(ControladoraSolicitarOrcamento.MSG_CONFIRMAR_DECISAO,
+                aprovou ? "APROVOU" : "RECUSOU", orc.getNumero());
+        int escolha = mostrarDialogo(Icone.PERGUNTA, pergunta, corpo, new String[]{"Cancelar", "Confirmar"},
+                aprovou ? 1 : -1, aprovou ? -1 : 1, null);
+        if (escolha != 1) {
+            return orc;   // não confirmou: nada gravado
+        }
+        try {
+            // FA-14.5
+            Orcamento atualizado = controladora.registrarDecisao(orc.getIdOrcamento(), decisao);
+
+            // FA-14.6: mensagem e o orçamento com a nova situação; FA-14.7 encerra.
+            String titulo = String.format(ControladoraSolicitarOrcamento.MSG_DECISAO_REGISTRADA,
+                    atualizado.getNumero(), aprovou ? "aprovado" : "recusado");
+            mostrarDialogo(aprovou ? Icone.SUCESSO : Icone.CONFIRMADO, titulo, criarCorpoDetalhes(atualizado),
+                    new String[]{"Fechar"}, 0, -1, null);
+            return atualizado;
+        } catch (IllegalArgumentException erro) {
+            mostrarAviso(erro.getMessage());   // RN-07 (validade vencida) ou situação diferente de "Em análise"
+        } catch (SQLException erro) {
+            mostrarErroDeBanco(erro);
+        }
+        return orc;
+    }
+
+    /** Dados do orçamento em tabela (usados pelo "Ver orçamento" e pelo FA-14.6). */
+    private JLabel criarCorpoDetalhes(Orcamento orc) {
         StringBuilder texto = new StringBuilder("<html><table cellpadding='2'>");
-        linhaDetalhe(texto, "Nº do orçamento", orc.getNumero());
-        linhaDetalhe(texto, "Data da solicitação", formatoData.format(orc.getDataSolicitacao()));
-        linhaDetalhe(texto, "Válido até", formatoData.format(orc.getDataValidade()));
-        linhaDetalhe(texto, "Origem do atendimento", orc.getOrigemAtendimento());
+        linhaDetalhe(texto, "Nº do orçamento", valorOuTraco(orc.getNumero()));
+        linhaDetalhe(texto, "Data da solicitação", dataOuTraco(orc.getDataSolicitacao()));
+        linhaDetalhe(texto, "Válido até", dataOuTraco(orc.getDataValidade()));
+        linhaDetalhe(texto, "Origem do atendimento", valorOuTraco(orc.getOrigemAtendimento()));
         linhaDetalhe(texto, "Responsável", descreverUsuario(orc.getTecnico()));
         linhaDetalhe(texto, "Situação", orc.getStatus().toUpperCase());
         linhaDetalhe(texto, "Cliente", orc.getCliente().getNome());
@@ -1990,7 +2042,16 @@ public class TelaSolicitarOrcamento extends JFrame {
         linhaDetalhe(texto, "Observações", orc.getObservacoes() == null ? "-" : orc.getObservacoes());
         JLabel corpo = new JLabel(texto.append("</table></html>").toString());
         corpo.setFont(corpo.getFont().deriveFont(Font.PLAIN, 12f));
-        mostrarDialogo(Icone.INFO, "Orçamento " + orc.getNumero(), corpo, new String[]{"Fechar"}, 0, -1, null);
+        return corpo;
+    }
+
+    /** Rascunhos da listagem não têm número nem validade. */
+    private static String valorOuTraco(String valor) {
+        return valor == null ? "-" : valor;
+    }
+
+    private String dataOuTraco(Date data) {
+        return data == null ? "-" : formatoData.format(data);
     }
 
     private void linhaDetalhe(StringBuilder texto, String rotulo, String valor) {
@@ -2045,8 +2106,9 @@ public class TelaSolicitarOrcamento extends JFrame {
         dispose();
     }
 
-    /** FA-00.4 / FA-12D: a listagem de orçamentos. */
+    /** FA-00.4 / FA-12D: a listagem de orçamentos. FA-14.1: "Ver orçamento" ou duplo clique abre um deles. */
     private void mostrarListaOrcamentos(List<Orcamento> orcamentos, String aviso) {
+        List<Orcamento> linhas = new ArrayList<>(orcamentos);
         DefaultTableModel modelo = new DefaultTableModel(new String[]{"Nº do orçamento", "Data da solicitação",
                 "Cliente", "Veículo", "Segmento", "Valor estimado", "Situação"}, 0) {
             private static final long serialVersionUID = 1L;
@@ -2065,7 +2127,27 @@ public class TelaSolicitarOrcamento extends JFrame {
         JTable tabela = new JTable(modelo);
         tabela.setName("tabelaOrcamentos");
         tabela.setRowHeight(26);
-        tabela.setEnabled(false);
+        tabela.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        tabela.getTableHeader().setReorderingAllowed(false);
+        // FA-14.1: abre o orçamento da linha; a situação nova volta para a tabela.
+        Runnable verOrcamento = () -> {
+            int linha = tabela.getSelectedRow();
+            if (linha < 0) {
+                mostrarAviso("Selecione um orçamento na lista.");
+                return;
+            }
+            Orcamento atual = mostrarDetalhesOrcamento(linhas.get(linha));
+            linhas.set(linha, atual);
+            modelo.setValueAt(atual.getStatus(), linha, 6);
+        };
+        tabela.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent evento) {
+                if (evento.getClickCount() == 2 && tabela.rowAtPoint(evento.getPoint()) >= 0) {
+                    verOrcamento.run();
+                }
+            }
+        });
         JScrollPane rolagem = new JScrollPane(tabela);
         rolagem.setPreferredSize(new Dimension(820, 260));
         JPanel corpo = new JPanel(new BorderLayout(0, 8));
@@ -2076,7 +2158,15 @@ public class TelaSolicitarOrcamento extends JFrame {
             corpo.add(rotulo, BorderLayout.NORTH);
         }
         corpo.add(rolagem, BorderLayout.CENTER);
-        mostrarDialogo(Icone.INFO, "Orçamentos", corpo, new String[]{"Fechar"}, 0, -1, null);
+        // "Ver orçamento" não fecha a listagem.
+        mostrarDialogo(Icone.INFO, "Orçamentos", corpo, new String[]{"Ver orçamento", "Fechar"}, 1, -1,
+                indice -> {
+                    if (indice == 0) {
+                        verOrcamento.run();
+                        return false;
+                    }
+                    return true;
+                });
     }
 
     // =================================================================
@@ -2100,25 +2190,38 @@ public class TelaSolicitarOrcamento extends JFrame {
             return;   // já cadastrado ou busca inválida
         }
         CampoTexto nome = new CampoTexto("campoNomeCliente", "");
+        CampoTexto cpfCnpj = new CampoTexto("campoCpfCnpjCliente", "");
+        restringir(cpfCnpj, SO_DOCUMENTO, 18, false);
         CampoTexto telefone = new CampoTexto("campoTelefoneCliente", "");
         restringir(telefone, SO_TELEFONE, 15, false);
         Campo cNome = new Campo("Nome", nome, nome, "");
+        Campo cCpfCnpj = new Campo("CPF / CNPJ", cpfCnpj, cpfCnpj, "");
         Campo cTelefone = new Campo("Telefone / WhatsApp", telefone, telefone, "");
         cNome.regra(envio -> Validacoes.validarObrigatorio(nome.getText()));
+        cCpfCnpj.regra(envio -> validarCpfCnpjOpcional(cpfCnpj.getText()));
         cTelefone.regra(envio -> Validacoes.validarTelefone(telefone.getText()));
         aoPerderFoco(nome, cNome::validar);
+        aoPerderFoco(cpfCnpj, () -> {
+            // Só dígitos vira 000.000.000-00 / 00.000.000/0000-00.
+            if (cCpfCnpj.validar() == null && !cpfCnpj.getText().isBlank()) {
+                cpfCnpj.setText(Validacoes.formatarCpfCnpj(cpfCnpj.getText()));
+            }
+        });
         aoPerderFoco(telefone, cTelefone::validar);
         // Pré-preenche com o texto buscado.
         String buscado = campoCliente.getText().trim();
         if (!buscado.isEmpty() && Validacoes.validarTelefone(buscado) == null) {
             telefone.setText(Validacoes.formatarTelefone(buscado));
+        } else if (!buscado.isEmpty() && buscado.matches("[0-9./\\-]+")
+                && validarCpfCnpjOpcional(buscado) == null) {
+            cpfCnpj.setText(Validacoes.formatarCpfCnpj(buscado));   // buscou por CPF/CNPJ não cadastrado
         } else if (!buscado.isEmpty() && !buscado.matches("[0-9./\\-()\\s+]+")) {
             nome.setText(buscado);
         }
 
         JPanel corpo = criarBloco();
         corpo.add(criarLinha(new JComponent[]{cNome.painel(true)}, new double[]{1}));
-        corpo.add(criarLinha(new JComponent[]{cTelefone.painel(true)}, new double[]{1}));
+        corpo.add(criarLinha(new JComponent[]{cCpfCnpj.painel(false), cTelefone.painel(true)}, new double[]{1, 1}));
         JLabel nota = criarDica("Após salvar, o sistema exibe o cliente sem veículos vinculados e abre o cadastro "
                 + "de veículo.");
         nota.setAlignmentX(LEFT_ALIGNMENT);
@@ -2130,17 +2233,19 @@ public class TelaSolicitarOrcamento extends JFrame {
                     if (opcao != 1) {
                         return true;
                     }
-                    boolean valido = cNome.validar() == null & cTelefone.validar() == null;
+                    boolean valido = cNome.validar() == null & cCpfCnpj.validar() == null
+                            & cTelefone.validar() == null;
                     if (!valido) {
                         return false;
                     }
                     try {
                         Cliente cliente = controladora.cadastrarCliente(nome.getText().trim(),
+                                Validacoes.somenteDigitos(cpfCnpj.getText()),
                                 Validacoes.formatarTelefone(telefone.getText()));
                         exibirCliente(cliente);
                         return true;
                     } catch (IllegalArgumentException erro) {
-                        cNome.marcar(erro.getMessage());
+                        (erro.getMessage().contains("CPF") ? cCpfCnpj : cNome).marcar(erro.getMessage());
                         return false;
                     } catch (SQLException erro) {
                         mostrarErroDeBanco(erro);
@@ -2151,6 +2256,21 @@ public class TelaSolicitarOrcamento extends JFrame {
             // FA-02.4-5: sem veículos, segue para o FA-04.
             cadastrarVeiculo();
         }
+    }
+
+    /** CPF/CNPJ do cadastro rápido: opcional; se informado, 11 ou 14 dígitos com verificadores corretos. */
+    private static String validarCpfCnpjOpcional(String texto) {
+        String d = Validacoes.somenteDigitos(texto);
+        if (d.isEmpty()) {
+            return null;
+        }
+        if (d.length() == 11) {
+            return Validacoes.cpfValido(d) ? null : Validacoes.MSG_CPF_INVALIDO;
+        }
+        if (d.length() == 14) {
+            return Validacoes.cnpjValido(d) ? null : Validacoes.MSG_CNPJ_INVALIDO;
+        }
+        return "Informe o CPF (11 dígitos) ou o CNPJ (14 dígitos).";
     }
 
     /** FA-04 (DSS alternativo 5 e 6): "Veículo não listado". */
@@ -2710,6 +2830,7 @@ public class TelaSolicitarOrcamento extends JFrame {
     private static final String SO_DATA = "[0-9/]";
     private static final String SO_VALOR = "[0-9.,]";
     private static final String SO_TELEFONE = "[0-9()\\- ]";
+    private static final String SO_DOCUMENTO = "[0-9./\\-]";
     private static final String SO_PLACA = "[A-Za-z0-9\\-]";
     private static final String SO_LETRAS_E_DIGITOS = "[A-Za-z0-9]";
 

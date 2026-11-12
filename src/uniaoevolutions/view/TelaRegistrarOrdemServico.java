@@ -892,7 +892,7 @@ public class TelaRegistrarOrdemServico extends JFrame {
             corpoJustificativa.add(new JLabel("<html><div style='width:420px'>" + exigencia + "</div></html>"),
                     BorderLayout.NORTH);
             corpoJustificativa.add(cJustificativa.painel(), BorderLayout.CENTER);
-            if (!pedirComValidacao(corpoJustificativa, "Justificativa da alteração (RN-05)", cJustificativa)) {
+            if (!pedirComValidacao(corpoJustificativa, "Justificativa da alteração", cJustificativa)) {
                 return;
             }
 

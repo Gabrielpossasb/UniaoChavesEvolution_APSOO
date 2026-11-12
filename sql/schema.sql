@@ -111,9 +111,10 @@ CREATE TABLE TB_Usuario (
 -- TB_Orcamento(idOrcamento<<PK>>, numero<<UNIQUE>>, dataSolicitacao,
 --   dataValidade, origemAtendimento, status, valorEstimado, observacoes,
 --   motivoCancelamento, idCliente<<FK>>, idVeiculo<<FK>>, idUsuario<<FK>>)
---   status {Rascunho | Em análise | Aprovado | Recusado | Expirado | Cancelado}
+--   status {Rascunho | Em análise | Aprovado | Recusado | Expirado | Cancelado |
+--           Convertido em OS}
 -- Superclasse. O segmento vem da subclasse com linha. numero e dataValidade: NULL
--- no rascunho (FA-12D). status é VARCHAR porque a 1ª iteração usa outras situações.
+-- no rascunho (FA-12D). status é VARCHAR porque inclui "Convertido em OS" (1ª iteração).
 -- ---------------------------------------------------------------------
 CREATE TABLE TB_Orcamento (
     idOrcamento        INT AUTO_INCREMENT PRIMARY KEY,
@@ -257,7 +258,8 @@ CREATE TABLE TB_Pagamento (
 -- DADOS DE EXEMPLO
 -- Cada cliente tem veículo, módulo, informações de segurança e orçamentos (o orçamento
 -- liga veículo e cliente, RN-02). Orçamentos 231 a 233: 1ª iteração. Os demais têm
--- número menor que 0231 (próximo: ORC-2026-0234) e não aparecem no Registrar OS.
+-- número menor que 0231 e não aparecem no Registrar OS. 234: "Em análise" com validade
+-- futura, para o FA-14 do Solicitar Orçamento (próximo: ORC-2026-0235).
 -- CPFs do mockup com os dígitos verificadores corrigidos.
 -- =====================================================================
 
@@ -310,8 +312,8 @@ INSERT INTO TB_ServicoBase (descricao, categoria, observacoesTecnicas) VALUES
 INSERT INTO TB_Usuario (nome, tipoUsuario) VALUES
     ('Gabriel Abraão',  'tecnicoDeModulos'),
     ('Eduardo José',    'tecnicoDeModulos'),
-    ('Jamily Sales',    'tecnicoDeChaves'),
-    ('Caetano Raimundo','administrador');
+    ('Caetano Raimundo','tecnicoDeChaves'),
+    ('Luiz Phellipe',    'administrador');
 -- Orçamentos. 118, 142 e 187 são de 2025 e viraram as três OS anteriores do QAF-7C21
 -- ("Ver 3 atendimentos anteriores" do mockup). Os demais ligam veículos e clientes.
 INSERT INTO TB_Orcamento (idOrcamento, numero, dataSolicitacao, dataValidade, origemAtendimento,
@@ -323,9 +325,12 @@ INSERT INTO TB_Orcamento (idOrcamento, numero, dataSolicitacao, dataValidade, or
     (212, 'ORC-2026-0212', '2026-07-30', '2026-08-14', 'Remoto',     'Expirado',                        420.00, NULL, 4, 4, 1),
     (220, 'ORC-2026-0220', '2026-08-05', '2026-08-20', 'Presencial', 'Em análise',                      520.00, NULL, 5, 5, 2),
     (224, 'ORC-2026-0224', '2026-08-12', '2026-08-27', 'Presencial', 'Recusado',                        180.00, NULL, 5, 6, 3),
-    (231, 'ORC-2026-0231', '2026-08-20', '2026-09-04', 'Presencial', 'Aprovado pelo cliente',           750.00, NULL, 1, 1, 1),
-    (232, 'ORC-2026-0232', '2026-08-24', '2026-09-08', 'Presencial', 'Aprovado pelo cliente',           480.00, NULL, 2, 2, 3),
-    (233, 'ORC-2026-0233', '2026-08-25', '2026-09-09', 'Remoto',     'Aguardando aprovação do cliente', 300.00, NULL, 1, 1, 2);
+    (231, 'ORC-2026-0231', '2026-08-20', '2026-09-04', 'Presencial', 'Aprovado',                        750.00, NULL, 1, 1, 1),
+    (232, 'ORC-2026-0232', '2026-08-24', '2026-09-08', 'Presencial', 'Aprovado',                        480.00, NULL, 2, 2, 3),
+    (233, 'ORC-2026-0233', '2026-08-25', '2026-09-09', 'Remoto',     'Em análise',                      300.00, NULL, 1, 1, 2),
+    -- FA-14: "Em análise" com validade futura (relativa a CURDATE(), vale em qualquer dia da demonstração).
+    (234, 'ORC-2026-0234', CURDATE(), DATE_ADD(CURDATE(), INTERVAL 15 DAY),
+                                                      'Presencial', 'Em análise',                      370.00, NULL, 4, 4, 2);
 
 INSERT INTO TB_OrcamentoModulos (idOrcamento, sintomaRelatado, diagnosticoPendenteBancada,
                                  identificacaoIlegivel, idModuloECU) VALUES
@@ -335,7 +340,8 @@ INSERT INTO TB_OrcamentoModulos (idOrcamento, sintomaRelatado, diagnosticoPenden
     (212, 'Marcha lenta oscilando e consumo alto.',                          TRUE,  FALSE, 4),
     (220, 'Trancos na troca de marcha.',                                     TRUE,  FALSE, 5),
     (231, 'Veículo não dá partida a frio; luz de injeção acesa no painel.',  TRUE,  FALSE, 1),
-    (233, 'Falha intermitente de marcha lenta.',                             FALSE, FALSE, 1);
+    (233, 'Falha intermitente de marcha lenta.',                             FALSE, FALSE, 1),
+    (234, 'Motor falhando em aceleração; luz de injeção acesa.',             TRUE,  FALSE, 4);
 
 INSERT INTO TB_OrcamentoChaves (idOrcamento, tipoChave, quantidadeCopias, possuiTelecomando,
                                 codigoTransponder, situacaoImobilizador, perdaTotal) VALUES
@@ -357,7 +363,9 @@ INSERT INTO TB_ItemOrcamento (valorProposto, quantidade, idOrcamento, idServicoB
     (220.00, 1, 231, 3),
     (130.00, 2, 232, 4),
     (220.00, 1, 232, 5),
-    (300.00, 1, 233, 1);
+    (300.00, 1, 233, 1),
+    (150.00, 1, 234, 1),
+    (220.00, 1, 234, 3);
 -- OS de 2025 dos orçamentos 118, 142 e 187 (não afetam o OS-2026-NNNN).
 INSERT INTO TB_OrdemDeServico (numeroOS, dataAbertura, statusOS, quilometragem, prazoEstimado,
                                observacoes, idOrcamento, idVeiculo, idUsuario) VALUES

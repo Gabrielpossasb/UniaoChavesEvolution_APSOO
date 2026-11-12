@@ -201,17 +201,17 @@ public class ControladoraRegistrarOS {
         this.orcamentoDoItemPendente = osEmRegistro.getOrcamento();
 
         return "A inclusão de \"" + servicoOuPeca + "\" altera o orçamento aprovado.\n"
-             + "Informe a justificativa da alteração (RN-05).";
+             + "Informe a justificativa da alteração.";   // RN-05
     }
 
     /**
      * FA-11B.3-4: grava a alteração e devolve a mensagem com o novo total. RN-05: orçamento
-     * volta a "Aguardando aprovação do cliente"; a OS não é registrada (FA-11B.5).
+     * volta a "Em análise", aguardando nova decisão do cliente; a OS não é registrada (FA-11B.5).
      */
     public String registrarOSComAlteracao(String servicoOuPeca, int quantidade, double valor,
                                           String justificativa) throws SQLException {
         if (justificativa == null || justificativa.isBlank()) {
-            throw new IllegalArgumentException("Informe a justificativa da alteração (RN-05).");
+            throw new IllegalArgumentException("Informe a justificativa da alteração.");   // RN-05
         }
         if (itemPendente == null || orcamentoDoItemPendente == null) {
             throw new IllegalArgumentException("Nenhuma alteração de item pendente de justificativa.");
@@ -222,8 +222,8 @@ public class ControladoraRegistrarOS {
         orcamentoDAO.incluirItem(orcamento.getIdOrcamento(), servicoOuPeca,
                 orcamento.getSegmentoPretendido(), quantidade, valor, justificativa);
 
-        // RN-05: execução suspensa até nova aprovação.
-        orcamentoDAO.atualizarStatus(orcamento.getIdOrcamento(), Orcamento.STATUS_AGUARDANDO);
+        // RN-05: execução suspensa até nova aprovação (FA-14 do Solicitar Orçamento).
+        orcamentoDAO.atualizarStatus(orcamento.getIdOrcamento(), Orcamento.STATUS_EM_ANALISE);
 
         double novoTotal = orcamento.getValorTotal() + (quantidade * valor);
         this.itemPendente = null;
@@ -233,7 +233,7 @@ public class ControladoraRegistrarOS {
                 "Novo valor total do orçamento %s: R$ %.2f%n%n"
               + "A execução fica suspensa até nova aprovação do cliente.%n"
               + "O orçamento voltou para a situação \"%s\" e a Ordem de Serviço não foi registrada.",
-                orcamento.getNumeroOrcamento(), novoTotal, Orcamento.STATUS_AGUARDANDO);
+                orcamento.getNumeroOrcamento(), novoTotal, Orcamento.STATUS_EM_ANALISE);
     }
 
     // =================================================================

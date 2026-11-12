@@ -74,6 +74,10 @@ public class ControladoraSolicitarOrcamento {
             + "informe o documento do veículo e a identificação de quem está solicitando.";
     /** FA-00.2: retorno de solicitarConfirmacaoDesistencia (texto do mockup). */
     public static final String MSG_CONFIRMAR_DESISTENCIA = "Desistir deste orçamento?";
+    /** FA-14.4: recebe "APROVOU"/"RECUSOU" e o número ORC-AAAA-NNNN. */
+    public static final String MSG_CONFIRMAR_DECISAO = "Confirmar que o cliente %s o orçamento %s?";
+    /** FA-14.6: recebe o número ORC-AAAA-NNNN e "aprovado"/"recusado". */
+    public static final String MSG_DECISAO_REGISTRADA = "Orçamento %s %s";
 
     // =================================================================
     // Atributos do Diagrama de Classes v2
@@ -214,12 +218,23 @@ public class ControladoraSolicitarOrcamento {
         return encontrado;
     }
 
-    /** DSS alternativo 4. FA-02.3-4: cliente cadastrado sem veículos. */
-    public Cliente cadastrarCliente(String nome, String telefone) throws SQLException {
+    /**
+     * DSS alternativo 4. FA-02.3-4: cliente cadastrado sem veículos. cpfCnpj é opcional
+     * (NULL se não informado) e é gravado só com os dígitos; não pode repetir (UNIQUE).
+     */
+    public Cliente cadastrarCliente(String nome, String cpfCnpj, String telefone) throws SQLException {
         if (nome == null || nome.isBlank() || telefone == null || telefone.isBlank()) {
             throw new IllegalArgumentException("Informe o nome e o telefone do cliente.");
         }
+        String documento = vazioParaNulo(cpfCnpj == null ? null : cpfCnpj.replaceAll("\\D", ""));
+        if (documento != null && documento.length() != 11 && documento.length() != 14) {
+            throw new IllegalArgumentException("Informe o CPF (11 dígitos) ou o CNPJ (14 dígitos).");
+        }
+        if (documento != null && clienteDAO.buscarPorCpfCnpj(documento) != null) {
+            throw new IllegalArgumentException("Já existe cliente cadastrado com o CPF/CNPJ informado.");
+        }
         Cliente novo = new Cliente(nome.trim(), telefone.trim());
+        novo.setCpfCnpj(documento);
         clienteDAO.salvar(novo);
         this.cli = novo;
         this.vei = null;
@@ -547,6 +562,27 @@ public class ControladoraSolicitarOrcamento {
         orc.marcarComoRascunho(hoje());
 
         orcamentoDAO.salvarRascunho(orc);
+    }
+
+    /**
+     * FA-14.5: registra a decisão do cliente (ator secundário) sobre um orçamento "Em análise".
+     * Mensagens 1.1 a 1.3. Grava só a situação (sem colunas novas).
+     * Regra violada (situação, decisão ou RN-07): IllegalArgumentException, nada gravado.
+     */
+    public Orcamento registrarDecisao(int idOrcamento, String decisao) throws SQLException {
+        // 1.1  orc = buscarOrcamento(idOrcamento) : Orcamento
+        Orcamento orc = orcamentoDAO.buscarOrcamento(idOrcamento);
+        if (orc == null) {
+            throw new IllegalArgumentException("Nenhum orçamento encontrado com o código informado.");
+        }
+
+        // 1.2  registrarDecisao(decisao) -> 1.2.1 setStatus(decisao)
+        orc.registrarDecisao(decisao);
+
+        // 1.3  atualizarStatus(idOrcamento, status)
+        orcamentoDAO.atualizarStatus(orc.getIdOrcamento(), orc.getStatus());
+
+        return orc;
     }
 
     /** DSS alternativo 18. FA-00.2. */

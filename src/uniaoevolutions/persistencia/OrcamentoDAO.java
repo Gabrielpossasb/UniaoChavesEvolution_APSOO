@@ -319,7 +319,7 @@ public class OrcamentoDAO {
         try (PreparedStatement comando = conexao.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             comando.setString(1, descricao);
             comando.setString(2, categoria);
-            comando.setString(3, "Justificativa (RN-05): " + justificativa);
+            comando.setString(3, "Justificativa: " + justificativa);   // RN-05
             comando.executeUpdate();
             return chaveGerada(comando, "do serviço incluído");
         }
